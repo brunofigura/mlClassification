@@ -39,7 +39,6 @@ def main():
 
     class LeNet5(nn.Module):
         def __init__(self, num_classes):
-                super(ConvNeuralNet, self).__init__()
                 self.layer1 = nn.Sequential(
                     nn.Conv2d(1, 6, kernel_size=5, stride=1, padding=0),
                     nn.BatchNorm2d(6),
