@@ -1,30 +1,15 @@
+import os
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import torchvision
 import torchvision.transforms as transforms
+import torch.backends.cudnn as cudnn
 import sklearn 
 from sklearn.metrics import precision_score, recall_score, f1_score
 
-# 1. Definition der LeNet-5 Architektur
-class LeNet5(nn.Module):
-    def __init__(self):
-        super(LeNet5, self).__init__()
-        self.conv1 = nn.Conv2d(3, 6, kernel_size=5)
-        self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
-        self.conv2 = nn.Conv2d(6, 16, kernel_size=5)
-        self.fc1 = nn.Linear(16 * 5 * 5, 120)
-        self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, 10)
-
-    def forward(self, x):
-        x = self.pool(nn.functional.relu(self.conv1(x)))
-        x = self.pool(nn.functional.relu(self.conv2(x)))
-        x = x.view(-1, 16 * 5 * 5)
-        x = nn.functional.relu(self.fc1(x))
-        x = nn.functional.relu(self.fc2(x))
-        x = self.fc3(x)
-        return x
+from models import *
 
 def main():
     # Check if CUDA is available and set device accordingly
@@ -48,11 +33,16 @@ def main():
                                              shuffle=False, num_workers=2)
 
     # 3. Netzwerkinstanziierung und auf das Gerät verschieben
-    model = LeNet5().to(device)
+    print('==> Building model ..')
+    model = LeNet5()
+    model = model.to(device)
+    if device == 'cuda':
+        model = nn.DataParallel(model)
+        cudnn.benchmark = True
 
     # 4. Loss-Funktion und Optimierer
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(net.parameters(), lr=0.001)
+    optimizer = optim.Adam(model.parameters(), lr=0.001)
 
     # 5. Training des Netzwerks
     num_epochs = 5
@@ -64,7 +54,7 @@ def main():
             inputs, labels = inputs.to(device), labels.to(device)
 
             optimizer.zero_grad()
-            outputs = net(inputs)
+            outputs = model(inputs)
             loss = criterion(outputs, labels)
             loss.backward()
             optimizer.step()
@@ -76,7 +66,7 @@ def main():
     print('Training beendet')
 
     # 6. Evaluation des Netzwerks
-    net.eval()
+    model.eval()
     test_loss = 0.0
     correct = 0
     all_predictions = []
@@ -85,7 +75,7 @@ def main():
         for data in testloader:
             images, labels = data
             images, labels = images.to(device), labels.to(device)
-            outputs = net(images)
+            outputs = model(images)
             test_loss += criterion(outputs, labels).item()
             _, predicted = torch.max(outputs, 1)
             correct += (predicted == labels).sum().item()
@@ -99,6 +89,16 @@ def main():
     f1 = f1_score(all_labels, all_predictions, average='macro')
 
     print(f'Accuracy: {accuracy:.4f}, Precision: {precision:.4f}, Recall: {recall:.4f}, F1: {f1:.4f}, Cross-Entropy Loss: {test_loss:.4f}')
+
+    modelSavePath = './trainedModels/LeNet5.ckpt'
+    os.makedirs(os.path.dirname(modelSavePath), exist_ok=True)
+
+    saveModel = input('Möchten Sie das Modell speicher? (y/n): ')
+    if saveModel.lower() == 'y':
+        torch.save(model.state_dict(), modelSavePath)
+        print(f'Modell wurder unter {modelSavePath} gespeichert.')
+    else:
+        print('Modell wurde nicht gespeichert.')
 
 if __name__ == '__main__':
     main()
