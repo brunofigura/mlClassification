@@ -12,6 +12,13 @@ from sklearn.metrics import precision_score, recall_score, f1_score
 from models import *
 
 def main():
+
+    #Hyperparameter
+
+    NUM_EPOCHS = 5
+    INIT_LR = 0.001
+    BATCH_SIZE = 32
+
     # Check if CUDA is available and set device accordingly
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     print(f'Using device: {device}')
@@ -20,17 +27,17 @@ def main():
     transform = transforms.Compose([
         transforms.Resize((32, 32)),  # Hochskalieren auf 32x32
         transforms.ToTensor(),
-        transforms.Normalize((0.5,), (0.5,))
+        transforms.Normalize((0.1307,), (0.3081,))  # Normalisieren und Standartabweichung des MNIST Datensatzen ( vorher waren die Werte 0.5 und 0.5)
     ])
 
     trainset = torchvision.datasets.MNIST(root='./data', train=True,
                                             download=True, transform=transform)
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=32,
+    trainloader = torch.utils.data.DataLoader(trainset, BATCH_SIZE,
                                               shuffle=True, num_workers=2)
 
     testset = torchvision.datasets.MNIST(root='./data', train=False,
                                            download=True, transform=transform)
-    testloader = torch.utils.data.DataLoader(testset, batch_size=32,
+    testloader = torch.utils.data.DataLoader(testset, BATCH_SIZE,
                                              shuffle=False, num_workers=2)
 
     # 3. Netzwerkinstanziierung und auf das Gerät verschieben
@@ -39,15 +46,14 @@ def main():
     model = model.to(device)
     if device == 'cuda':
         model = nn.DataParallel(model)
-        cudnn.benchmark = True
+        cudnn.benchmark = True          #optimiert für statische Modell-Architekturen
 
     # 4. Loss-Funktion und Optimierer
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.001)
+    optimizer = optim.Adam(model.parameters(), INIT_LR)
 
     # 5. Training des Netzwerks
-    num_epochs = 5
-    for epoch in range(num_epochs):
+    for epoch in range(NUM_EPOCHS):
         model.train()
         running_loss = 0.0
         for i, data in enumerate(trainloader, 0):
@@ -100,6 +106,10 @@ def main():
         print(f'Modell wurder unter {modelSavePath} gespeichert.')
     else:
         print('Modell wurde nicht gespeichert.')
+
+def new_func():
+    num_epochs = 5
+    return num_epochs
 
 if __name__ == '__main__':
     main()

@@ -12,6 +12,13 @@ from sklearn.metrics import precision_score, recall_score, f1_score
 from models import *
 
 def main():
+
+    #Hyperparameter 
+
+    NUM_EPOCHS = 5
+    INIT_LR = 0.001
+    BATCH_SIZE = 32
+
     # Check if CUDA is available and set device accordingly
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     print(f'Using device: {device}')
@@ -19,17 +26,17 @@ def main():
     # 2. Daten laden und vorbereiten
     transform = transforms.Compose([
         transforms.ToTensor(),
-        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261)) # CIFAR Normalisation und Standartabweichung der Kanäle
     ])
 
     trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
                                             download=True, transform=transform)
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=32,
+    trainloader = torch.utils.data.DataLoader(trainset, BATCH_SIZE,
                                               shuffle=True, num_workers=2)
 
     testset = torchvision.datasets.CIFAR10(root='./data', train=False,
                                            download=True, transform=transform)
-    testloader = torch.utils.data.DataLoader(testset, batch_size=32,
+    testloader = torch.utils.data.DataLoader(testset, BATCH_SIZE,
                                              shuffle=False, num_workers=2)
 
     # 3. Netzwerkinstanziierung und auf das Gerät verschieben
@@ -42,11 +49,10 @@ def main():
 
     # 4. Loss-Funktion und Optimierer
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.001)
+    optimizer = optim.Adam(model.parameters(), INIT_LR)
 
     # 5. Training des Netzwerks
-    num_epochs = 5
-    for epoch in range(num_epochs):
+    for epoch in range(NUM_EPOCHS):
         model.train()
         running_loss = 0.0
         for i, data in enumerate(trainloader, 0):
