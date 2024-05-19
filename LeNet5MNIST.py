@@ -1,5 +1,7 @@
 import os
 
+import matplotlib.pyplot as plt
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -7,7 +9,8 @@ import torchvision
 import torchvision.transforms as transforms
 import torch.backends.cudnn as cudnn
 import sklearn 
-from sklearn.metrics import precision_score, recall_score, f1_score
+from sklearn.metrics import precision_score, recall_score, f1_score, roc_curve, auc, RocCurveDisplay
+from sklearn.preprocessing import label_binarize
 
 from models import *
 
@@ -18,6 +21,7 @@ def main():
     NUM_EPOCHS = 5
     INIT_LR = 0.001
     BATCH_SIZE = 32
+    NUM_CLASSES = 10
 
     # Check if CUDA is available and set device accordingly
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -78,6 +82,9 @@ def main():
     correct = 0
     all_predictions = []
     all_labels = []
+
+
+
     with torch.no_grad():
         for data in testloader:
             images, labels = data
@@ -97,6 +104,10 @@ def main():
 
     print(f'Accuracy: {accuracy:.4f}, Precision: {precision:.4f}, Recall: {recall:.4f}, F1: {f1:.4f}, Cross-Entropy Loss: {test_loss:.4f}')
 
+
+
+
+    # Speichern des Modells
     modelSavePath = './trainedModels/LeNet5MNIST.ckpt'
     os.makedirs(os.path.dirname(modelSavePath), exist_ok=True)
 
@@ -107,9 +118,7 @@ def main():
     else:
         print('Modell wurde nicht gespeichert.')
 
-def new_func():
-    num_epochs = 5
-    return num_epochs
+    
 
 if __name__ == '__main__':
     main()
