@@ -1,36 +1,18 @@
 import torch.nn as nn
 import torch.nn.functional as F
 
-# Multilayer Perzeptron mit zwei hidden-layer
-# Hyperparamater werden dem Konstruktor übergeben
+# MLP Model
 class MLP(nn.Module):
-    def __init__(self, input_dim, output_dim):
-        super().__init__()
-
-        self.input_fc = nn.Linear(input_dim, 250)
-        self.hidden_fc = nn.Linear(250, 100)
-        self.output_fc = nn.Linear(100, output_dim)
+    def __init__(self, input_size, hidden_size, output_size):
+        super(MLP, self).__init__()
+        self.input_size = input_size
+        self.fc1 = nn.Linear(input_size, hidden_size)
+        self.relu = nn.ReLU()
+        self.fc2 = nn.Linear(hidden_size, output_size)
 
     def forward(self, x):
-
-        # x = [batch size, height, width]
-
-        batch_size = x.shape[0]
-
-        x = x.view(batch_size, -1)
-
-        # x = [batch size, height * width]
-
-        h_1 = F.relu(self.input_fc(x))
-
-        # h_1 = [batch size, 250]
-
-        h_2 = F.relu(self.hidden_fc(h_1))
-
-        # h_2 = [batch size, 100]
-
-        y_pred = self.output_fc(h_2)
-
-        # y_pred = [batch size, output dim]
-
-        return y_pred, h_2
+        x = x.view(-1, self.input_size)  # Flatten the image
+        x = self.fc1(x)
+        x = self.relu(x)
+        x = self.fc2(x)
+        return x

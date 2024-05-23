@@ -26,8 +26,8 @@ from models import *
 def main():
     #Hyperparameter
     BATCH_SIZE = 64
-    HIDDEN_SIZE = 128
-    IMG_RES = 28 * 28
+    HIDDEN_SIZE = 250
+    IMG_RES = 32 * 32 * 3
     NUM_CLASSES = 10
     LR = 0.0001
     NUM_EPOCHS = 15
@@ -36,34 +36,22 @@ def main():
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f'Training on device: {device}')
 
-    train_data = datasets.MNIST(root='.\data',
-                            train=True,
-                            download=True)
 
-    mean = train_data.data.float().mean() / 255     # = 0.13066
-    std = train_data.data.float().std() / 255       # = 0.30810
+    transform = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+    ])
+    
 
-    train_transforms = transforms.Compose([
-                                transforms.RandomRotation(5, fill=(0,)),    #Trainingsdatensatz um + - 5 Grad zufällig rotieren
-                                transforms.RandomCrop(28, padding=2),       #2Pixel Rand erzeugen und davon 28x28 Pixel Crop nehmen
-                                transforms.ToTensor(),
-                                transforms.Normalize(mean=[mean], std=[std])
-                                        ])
-
-    test_transforms = transforms.Compose([
-                            transforms.ToTensor(),
-                            transforms.Normalize(mean=[mean], std=[std])
-                                        ])    
-
-    train_dataset = datasets.MNIST(root='./data',
+    train_dataset = datasets.CIFAR10(root='./data',
                                 train=True,
                                 download=True,
-                                transform=train_transforms)
+                                transform=transform)
 
-    test_dataset = datasets.MNIST(root='./data',
+    test_dataset = datasets.CIFAR10(root='./data',
                             train=False,
                             download=True,
-                            transform=test_transforms)
+                            transform=transform)
 
 
     #Dataloader der Batches von Daten entählt
@@ -129,7 +117,7 @@ def main():
     print(f'Accuracy: {accuracy:.4f}, Precision: {precision:.4f}, Recall: {recall:.4f}, F1: {f1:.4f}, Cross-Entropy Loss: {test_loss:.4f}')
 
     # Speichern des Modells
-    modelSavePath = './trainedModels/mlpMNIST.ckpt'
+    modelSavePath = './trainedModels/mlpCIFAR.ckpt'
     os.makedirs(os.path.dirname(modelSavePath), exist_ok=True)
 
     saveModel = input('Möchten Sie das Modell speicher? (y/n): ')
