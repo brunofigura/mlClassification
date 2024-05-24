@@ -30,3 +30,7 @@ Alle benutzten Packages wurden in der _requirements.txt_ Datei gespeichert.
 Der Befehl `pip install -r requirements.txt` installiert alle benutzen Packages des Projektes in dem Virtual Enviroment.
 
 > Es muss vorher sicher gestellt werden, dass das man sich im Projekt-Directory befindet
+
+## Netze trainieren und evaluieren
+
+Jedes DNN hat sein eigenes File. Führt man diese in einer IDE aus, wird das entsprechende Netz trainiert. 
