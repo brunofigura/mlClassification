@@ -10,8 +10,6 @@ from sklearn.metrics import precision_score, recall_score, f1_score, confusion_m
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from models import *
-
 def main():
 
     #Hyperparameter 
