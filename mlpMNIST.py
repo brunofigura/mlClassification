@@ -25,6 +25,8 @@ from models import *
 
 def main():
     #Hyperparameter
+    modelSavePath = './trainedModels/mlpMNIST.ckpt'
+
     BATCH_SIZE = 64
     HIDDEN_SIZE = 128
     IMG_RES = 28 * 28
@@ -129,12 +131,12 @@ def main():
     print(f'Accuracy: {accuracy:.4f}, Precision: {precision:.4f}, Recall: {recall:.4f}, F1: {f1:.4f}, Cross-Entropy Loss: {test_loss:.4f}')
 
     # Speichern des Modells
-    modelSavePath = './trainedModels/mlpMNIST.ckpt'
+    
     os.makedirs(os.path.dirname(modelSavePath), exist_ok=True)
 
     saveModel = input('Möchten Sie das Modell speicher? (y/n): ')
     if saveModel.lower() == 'y':
-        torch.save(model.state_dict(), modelSavePath)
+        torch.save(model, modelSavePath)
         print(f'Modell wurder unter {modelSavePath} gespeichert.')
     else:
         print('Modell wurde nicht gespeichert.')

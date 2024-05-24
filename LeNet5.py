@@ -14,6 +14,7 @@ from models import *
 def main():
 
     #Hyperparameter 
+    modelSavePath = './trainedModels/LeNet5CIFAR10.ckpt'
 
     NUM_EPOCHS = 5
     INIT_LR = 0.001
@@ -96,12 +97,12 @@ def main():
 
     print(f'Accuracy: {accuracy:.4f}, Precision: {precision:.4f}, Recall: {recall:.4f}, F1: {f1:.4f}, Cross-Entropy Loss: {test_loss:.4f}')
 
-    modelSavePath = './trainedModels/LeNet5.ckpt'
+    
     os.makedirs(os.path.dirname(modelSavePath), exist_ok=True)
 
     saveModel = input('Möchten Sie das Modell speicher? (y/n): ')
     if saveModel.lower() == 'y':
-        torch.save(model.state_dict(), modelSavePath)
+        torch.save(model, modelSavePath)
         print(f'Modell wurder unter {modelSavePath} gespeichert.')
     else:
         print('Modell wurde nicht gespeichert.')
