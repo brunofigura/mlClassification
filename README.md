@@ -1,4 +1,4 @@
-# Klassifizeierung - Thema 2
+# Thema 2 - Klassifizierung
 
 ## Setup
 #### 1. Schritt: Das GitHub repository klonen
