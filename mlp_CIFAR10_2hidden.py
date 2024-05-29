@@ -16,12 +16,16 @@ def main():
 
     TRAIN_MODEL = True
 
-    BATCH_SIZE = 64
-    HIDDEN_SIZE = 250
+    VALID_RATIO = 0.1
+    BATCH_SIZE = 265
+    HIDDEN_SIZE = 1500
+    HIDDEN_SIZE2 = 250
+    HIDDEN_SIZE3 = 100
     IMG_RES = 32 * 32 * 3
     NUM_CLASSES = 10
-    INIT_LR = 0.001
-    NUM_EPOCHS = 5
+    INIT_LR = 0.01
+    MOMENTUM = 0.9
+    NUM_EPOCHS = 10
    
     # Check if GPU is available
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -30,7 +34,7 @@ def main():
 
     transform = transforms.Compose([
         transforms.ToTensor(),
-        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
     ])
     
 
@@ -43,11 +47,17 @@ def main():
                             train=False,
                             download=True,
                             transform=transform)
+    #Validierungs-Set vom Trainingsdatensatz erzeugen
+    num_train = len(train_dataset)
+    num_valid = int(VALID_RATIO * num_train)
+    num_train = num_train - num_valid
+
+    train_subset, valid_subset = torch.utils.data.random_split(train_dataset, [num_train, num_valid])
 
 
     #Dataloader der Batches von Daten entählt
     
-    trainloader = torch.utils.data.DataLoader(train_dataset,
+    trainloader = torch.utils.data.DataLoader(train_subset,
                                     shuffle=True,
                                     batch_size=BATCH_SIZE)
 
@@ -55,28 +65,38 @@ def main():
     testloader = torch.utils.data.DataLoader(test_dataset,
                                     batch_size=BATCH_SIZE)
 
+    validloader = torch.utils.data.DataLoader(valid_subset, batch_size=BATCH_SIZE)
 
     #Modell instanziieren
     # MLP mit zwei hidden Layer
     class MLP(nn.Module):
-        def __init__(self, input_size, hidden_size, output_size):
+        def __init__(self, input_size, hidden_size, hidden_size2, hidden_size3, output_size):
             super(MLP, self).__init__()
             self.input_size = input_size
             self.fc1 = nn.Linear(input_size, hidden_size)
             self.relu = nn.ReLU()
-            self.fc2 = nn.Linear(hidden_size, output_size)
+            self.fc2 = nn.Linear(hidden_size, hidden_size2)
+            self.fc3 = nn.Linear(hidden_size2, hidden_size3)
+            self.fc4 = nn.Linear(hidden_size3, output_size)
 
         def forward(self, x):
             x = x.view(-1, self.input_size)  # Flatten the image
             x = self.fc1(x)
             x = self.relu(x)
             x = self.fc2(x)
+            x = self.relu(x)
+            x = self.fc3(x)
+            x = self.relu(x)
+            x = self.fc4(x)
             return x
     
     #Training des Modells    
 
     print('==> Building model ..')
-    model = MLP(IMG_RES, HIDDEN_SIZE, NUM_CLASSES).to(device)
+    model = MLP(IMG_RES, HIDDEN_SIZE, HIDDEN_SIZE2, HIDDEN_SIZE3, NUM_CLASSES).to(device)
+
+    total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    print(f'Total number of trainable parameters: {total_params}')
 
     if not TRAIN_MODEL:
         print("loading wheigts ...")
@@ -87,9 +107,13 @@ def main():
         model = model.to(device)
         # 4. Loss-Funktion und Optimierer
         criterion = nn.CrossEntropyLoss()
-        optimizer = optim.Adam(model.parameters(), INIT_LR)
+        optimizer = optim.SGD(model.parameters(), INIT_LR, MOMENTUM)
+
 
         # 5. Training des Netzwerks
+        train_losses = []
+        valid_losses = []
+        
         for epoch in range(NUM_EPOCHS):
             model.train()
             running_loss = 0.0
@@ -106,6 +130,23 @@ def main():
                 if i % 100 == 99:
                     print(f'Epoch {epoch+1}, Batch {i+1}, Loss: {running_loss/100:.3f}')
                     running_loss = 0.0
+            avg_train_loss = running_loss / len(trainloader)
+            train_losses.append(avg_train_loss)
+        
+        # nach Epoche validieren
+            model.eval()
+            val_loss = 0.0
+            with torch.no_grad():
+                for data in validloader:
+                    inputs, labels = data
+                    inputs, labels = inputs.to(device), labels.to(device)
+                    outputs = model(inputs)
+                    loss = criterion(outputs, labels)
+                    val_loss += loss.item()
+            avg_valid_loss = val_loss / len(validloader)
+            valid_losses.append(avg_valid_loss)
+
+            print(f'Epoch {epoch+1}, Training Loss: {avg_train_loss:.4f}, Validation Loss: {avg_valid_loss:.4f}')
 
         print('Training beendet')
 
@@ -113,6 +154,16 @@ def main():
         os.makedirs(os.path.dirname(modelSavePath), exist_ok=True)
         torch.save(model.state_dict(), modelSavePath)
         print(f'Modell wurde unter {modelSavePath} gespeichert.')
+
+    # Val und Train-Loss plotten
+        plt.figure()
+        plt.plot(range(1, NUM_EPOCHS + 1), train_losses, label='Training Loss')
+        plt.plot(range(1, NUM_EPOCHS + 1), valid_losses, label='Validation Loss')
+        plt.xlabel('Epoch')
+        plt.ylabel('Loss')
+        plt.title('Training and Validation Loss')
+        plt.legend()
+        plt.show()
 
     # 6. Evaluation des Netzwerks
     model.eval()
