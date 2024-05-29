@@ -24,7 +24,7 @@ def main():
     IMG_RES = 32 * 32 * 3
     NUM_CLASSES = 10
     INIT_LR = 0.01
-    MOMENTUM = 0.9
+    MOMENTUM = 0.009
     NUM_EPOCHS = 10
    
     # Check if GPU is available
