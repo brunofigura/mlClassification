@@ -1,4 +1,8 @@
-import mlp_CIFAR10
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+from mlp_cifar import Classifier
 
 def main():
     n_epochs = 4
