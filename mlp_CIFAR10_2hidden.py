@@ -16,6 +16,8 @@ def main():
 
     TRAIN_MODEL = True
 
+    LOG_INTERVALL = 10
+
     VALID_RATIO = 0.1
     BATCH_SIZE = 265
     HIDDEN_SIZE = 1500
@@ -25,7 +27,7 @@ def main():
     NUM_CLASSES = 10
     INIT_LR = 0.01
     MOMENTUM = 0.009
-    NUM_EPOCHS = 10
+    NUM_EPOCHS = 4
    
     # Check if GPU is available
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -66,6 +68,12 @@ def main():
                                     batch_size=BATCH_SIZE)
 
     validloader = torch.utils.data.DataLoader(valid_subset, batch_size=BATCH_SIZE)
+
+    train_losses = []
+    train_counter = []
+    test_losses = []
+    test_counter = [i * len(trainloader.dataset) for i in range(NUM_EPOCHS + 1)]
+    valid_losses = []
 
     #Modell instanziieren
     # MLP mit zwei hidden Layer
@@ -111,42 +119,25 @@ def main():
 
 
         # 5. Training des Netzwerks
-        train_losses = []
-        valid_losses = []
         
         for epoch in range(NUM_EPOCHS):
             model.train()
-            running_loss = 0.0
-            for i, data in enumerate(trainloader, 0):
-                inputs, labels = data
-                inputs, labels = inputs.to(device), labels.to(device)
-
-                optimizer.zero_grad()
-                outputs = model(inputs)
-                loss = criterion(outputs, labels)
+            for batch_idx, (data, target) in enumerate(trainloader):
+                data, target = data.to(device), target.to(device)
+                optimizer.zero_grad
+                output = model(data)
+                loss = criterion(output, target)
                 loss.backward()
-                optimizer.step()
-                running_loss += loss.item()
-                if i % 100 == 99:
-                    print(f'Epoch {epoch+1}, Batch {i+1}, Loss: {running_loss/100:.3f}')
-                    running_loss = 0.0
-            avg_train_loss = running_loss / len(trainloader)
-            train_losses.append(avg_train_loss)
-        
-        # nach Epoche validieren
-            model.eval()
-            val_loss = 0.0
-            with torch.no_grad():
-                for data in validloader:
-                    inputs, labels = data
-                    inputs, labels = inputs.to(device), labels.to(device)
-                    outputs = model(inputs)
-                    loss = criterion(outputs, labels)
-                    val_loss += loss.item()
-            avg_valid_loss = val_loss / len(validloader)
-            valid_losses.append(avg_valid_loss)
-
-            print(f'Epoch {epoch+1}, Training Loss: {avg_train_loss:.4f}, Validation Loss: {avg_valid_loss:.4f}')
+                optimizer.step
+                if batch_idx % LOG_INTERVALL == 0:
+                    print(f'Train Epoch: {epoch}'
+                          f'[{batch_idx * len(data)}'
+                          f'/{len(trainloader.dataset)}'
+                          f'({100. * batch_idx / len(trainloader):.0f}%]'
+                          f'\tLoss: {loss.item():.6f}', end='\r')
+                    train_losses.append(loss.item())
+                    train_counter.append(
+                        (batch_idx * BATCH_SIZE) + ((epoch - 1) * len(trainloader.dataset)))
 
         print('Training beendet')
 
