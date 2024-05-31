@@ -24,14 +24,20 @@ class MLP(nn.Module):
             self.fc8 = nn.Linear(525, 100)
             self.fc9 = nn.Linear(100, output_size)
             self.dropout = nn.Dropout(0.2)
+            self.b_norm1 = nn.BatchNorm1d(4608)
+            self.b_norm2 = nn.BatchNorm1d(2304)
+            self.b_norm3 = nn.BatchNorm1d(525)
+            self.b_norm4 = nn.BatchNorm1d(100)
 
         def forward(self, x):
             x = x.view(-1, self.input_size)  # Flatten the image
             x = self.dropout(x)
             x = self.fc1(x)
+            x = self.b_norm1(x)
             x = self.relu(x)
             x = self.dropout(x)
             x = self.fc2(x)
+            x = self.b_norm2(x)         
             x = self.relu(x)
             x = self.dropout(x)
             x = self.fc3(x)
@@ -41,15 +47,19 @@ class MLP(nn.Module):
             x = self.relu(x)
             x = self.dropout(x)
             x = self.fc5(x)
+            x = self.b_norm3(x)
             x = self.relu(x)
             x = self.dropout(x)
             x = self.fc6(x)
+            x = self.b_norm3(x)
             x = self.relu(x)
             x = self.dropout(x)
             x = self.fc7(x)
+            x = self.b_norm3(x)
             x = self.relu(x)
             x = self.dropout(x)
             x = self.fc8(x)
+            x = self.b_norm4(x)
             x = self.relu(x)
             x = self.dropout(x)
             x = self.fc9(x)
@@ -188,7 +198,7 @@ class Classifier:
 
 
 def main():
-    n_epochs = 14
+    n_epochs = 30
     log_interval = 10
     init_lr = 0.01
     momentum = 0.9
