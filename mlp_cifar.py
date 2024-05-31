@@ -155,7 +155,7 @@ class Classifier:
         plt.show()
 
 def main():
-    n_epochs = 4
+    n_epochs = 8
     log_interval = 10
     init_lr = 0.001
     cl = Classifier(n_epochs, init_lr)
