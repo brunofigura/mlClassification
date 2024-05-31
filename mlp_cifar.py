@@ -36,6 +36,8 @@ class Classifier:
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
         self.batch_size = 64
+        self.valid_ratio = 0.1
+
         self.n_epochs = n_epochs
         self.init_lr = init_lr
         self.img_res = 32 * 32 * 3
@@ -43,8 +45,10 @@ class Classifier:
 
         transform = transforms.Compose([
                 transforms.ToTensor(),
-                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+                transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
         ])
+
+
 
         self.train_dataset = torchvision.datasets.CIFAR10(root='./data',
                                 train=True,
@@ -56,21 +60,36 @@ class Classifier:
                             download=True,
                             transform=transform)
         
-        self.train_loader = torch.utils.data.DataLoader(self.train_dataset,
+        #Validierungs-Set vom Trainingsdatensatz erzeugen
+        num_train = len(self.train_dataset)
+        num_valid = int(self.valid_ratio * num_train)
+        num_train = num_train - num_valid
+
+        self.train_subset, self.valid_subset = torch.utils.data.random_split(self.train_dataset, [num_train, num_valid])
+            
+        self.train_loader = torch.utils.data.DataLoader(self.train_subset,
                                     shuffle=True,
                                     batch_size=self.batch_size)
+        
+        self.valid_loader = torch.utils.data.DataLoader(self.valid_subset, shuffle=True, batch_size=self.batch_size)
 
 
         self.test_loader = torch.utils.data.DataLoader(self.test_dataset,
                                     batch_size=self.batch_size)
         
+
+
+
         self.network = MLP(self.img_res, self.num_classes)
         self.network = self.network.to(self.device)
 
         self.optimizer = optim.Adam(self.network.parameters(), self.init_lr)
+        self.criterion = nn.CrossEntropyLoss()  # Use CrossEntropyLoss instead of NLLLoss
         
         self.train_losses = []
         self.train_counter = []
+        self.valid_losses = []
+        self.valid_counter = []
         self.test_losses = []
         self.test_counter = [i * len(self.train_loader.dataset) for i in range(self.n_epochs + 1)]
 
@@ -80,19 +99,34 @@ class Classifier:
             data, target = data.to(self.device), target.to(self.device)
             self.optimizer.zero_grad()
             output = self.network(data)
-            loss = F.nll_loss(output, target)
+            loss = self.criterion(output, target)
             loss.backward()
             self.optimizer.step()
             if batch_idx % log_interval == 0:
-                print(f'Train Epoch: {epoch}'
-                      f'[{batch_idx * len(data)}'
-                      f'/{len(self.train_loader.dataset)}'
-                      f'({100. * batch_idx / len(self.train_loader):.0f}%]'
-                      f'\tLoss: {loss.item():.6f}', end='\r')
+                print(f'Train Epoch: {epoch} '
+                      f'[{batch_idx * len(data)}/{len(self.train_loader.dataset)} '
+                      f'({100. * batch_idx / len(self.train_loader):.0f}%)]  Loss: {loss.item():.6f}', end='\r')
                 self.train_losses.append(loss.item())
                 self.train_counter.append(
                     (batch_idx * self.batch_size) + ((epoch - 1) * len(self.train_loader.dataset)))
-                
+
+    def validate(self):
+        self.network.eval()
+        valid_loss = 0
+        correct = 0
+        with torch.no_grad():
+            for data, target in self.valid_loader:
+                data, target = data.to(self.device), target.to(self.device)
+                output = self.network(data)
+                valid_loss += self.criterion(output, target).item()
+                pred = output.data.max(1, keepdim=True)[1]
+                correct += pred.eq(target.data.view_as(pred)).sum().item()
+            valid_loss /= len(self.valid_loader)
+            self.valid_losses.append(valid_loss)
+            print(f'\nValidation set: Avg. loss: {valid_loss:.4f}, '
+              f'Accuracy: {correct}/{len(self.valid_loader.dataset)}'
+              f'({100. * correct / len(self.valid_loader.dataset):.0f}%)\n')
+
     def test(self):
         self.network.eval()
         test_loss = 0
@@ -101,22 +135,23 @@ class Classifier:
             for data, target in self.test_loader:
                 data, target = data.to(self.device), target.to(self.device)
                 output = self.network(data)
-                test_loss += F.nll_loss(output, target).item()
+                test_loss += self.criterion(output, target).item()
                 pred = output.data.max(1, keepdim=True)[1]
-                correct += pred.eq(target.data.view_as(pred)).sum()
-        test_loss /= len(self.test_loader.dataset)
+                correct += pred.eq(target.data.view_as(pred)).sum().item()
+        test_loss /= len(self.test_loader)
         self.test_losses.append(test_loss)
         print(f'\nTest set: Avg. loss: {test_loss:.4f}, '
-              f'Accuracy: {correct}'
-              f'/{len(self.test_loader.dataset)}'
+              f'Accuracy: {correct}/{len(self.test_loader.dataset)}'
               f'({100. * correct / len(self.test_loader.dataset):.0f}%)\n')
         
-    def plot_res(self):
-        fig, axs = plt.subplots(ncols=2)
-        axs[0].set_title("Training")
-        axs[0].plot(self.train_losses)
-        axs[1].set_title("Validation")
-        axs[1].plot(self.test_losses)
+    def plot_val_train_losses(self):
+        plt.figure(figsize=(10, 5))
+        plt.plot(self.train_losses, label='Training Loss', color='blue')
+        plt.plot(self.valid_losses, label='Validation Loss', color='orange')
+        plt.xlabel('Iterations')
+        plt.ylabel('Loss')
+        plt.title('Training and Validation Losses')
+        plt.legend()
         plt.show()
 
 def main():
@@ -126,9 +161,11 @@ def main():
     cl = Classifier(n_epochs, init_lr)
     cl.test()
 
-    for epoch in range(n_epochs):
+    for epoch in range(1, n_epochs + 1):
         cl.train(epoch, log_interval)
-        cl.test()
+        cl.validate()
+
+    cl.plot_val_train_losses()
 
 if __name__ == '__main__':
     main()
