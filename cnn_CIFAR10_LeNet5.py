@@ -13,7 +13,7 @@ import seaborn as sns
 def main():
 
     #Hyperparameter 
-    modelSavePath = './trainedModels/LeNet5CIFAR10.ckpt'
+    modelSavePath = './.gitignore/LeNet5CIFAR10.ckpt'
     TRAIN_MODEL = False  # True, wenn das Modell trainiert werden soll, False, wenn es geladen werden soll
 
     NUM_EPOCHS = 5
@@ -41,27 +41,70 @@ def main():
                                              shuffle=False, num_workers=2)
 
     # 3. Netzwerk definieren und auf das Gerät verschieben
-    class LeNet5(nn.Module):
-        def __init__(self):
-                super(LeNet5, self).__init__()
-                self.conv1 = nn.Conv2d(3, 6, kernel_size=5)
-                self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
-                self.conv2 = nn.Conv2d(6, 16, kernel_size=5)
-                self.fc1 = nn.Linear(16 * 5 * 5, 120)
-                self.fc2 = nn.Linear(120, 84)
-                self.fc3 = nn.Linear(84, 10)
+class VGG16(nn.Module):
+    def __init__(self, num_classes=10):
+        super(VGG16, self).__init__()
+        self.features = nn.Sequential(
+            # Conv Block 1
+            nn.Conv2d(3, 64, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(64, 64, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2),
 
-        def forward(self, x):
-                x = self.pool(nn.functional.relu(self.conv1(x)))
-                x = self.pool(nn.functional.relu(self.conv2(x)))
-                x = x.view(-1, 16 * 5 * 5)
-                x = nn.functional.relu(self.fc1(x))
-                x = nn.functional.relu(self.fc2(x))
-                x = self.fc3(x)
-                return x
+            # Conv Block 2
+            nn.Conv2d(64, 128, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(128, 128, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+
+            # Conv Block 3
+            nn.Conv2d(128, 256, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(256, 256, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(256, 256, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+
+            # Conv Block 4
+            nn.Conv2d(256, 512, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(512, 512, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(512, 512, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+
+            # Conv Block 5
+            nn.Conv2d(512, 512, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(512, 512, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(512, 512, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+        )
+
+        self.classifier = nn.Sequential(
+            nn.Linear(512 * 1 * 1, 4096),
+            nn.ReLU(inplace=True),
+            nn.Dropout(),
+            nn.Linear(4096, 4096),
+            nn.ReLU(inplace=True),
+            nn.Dropout(),
+            nn.Linear(4096, num_classes),
+        )
+
+    def forward(self, x):
+        x = self.features(x)
+        x = x.view(x.size(0), -1)
+        x = self.classifier(x)
+        return x
 
     print('==> Building model ..')
-    model = LeNet5()
+    model = VGG16()
     
     if not TRAIN_MODEL:
         print("loading wheigts ...")
