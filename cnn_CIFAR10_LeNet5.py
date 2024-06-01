@@ -13,12 +13,12 @@ import seaborn as sns
 def main():
 
     #Hyperparameter 
-    modelSavePath = './.gitignore/VGGCIFAR10.ckpt'
+    modelSavePath = './.gitignore/trainedModel/VGGCIFAR10.ckpt'
     TRAIN_MODEL = True  # True, wenn das Modell trainiert werden soll, False, wenn es geladen werden soll
 
-    NUM_EPOCHS = 5
-    INIT_LR = 0.001
-    BATCH_SIZE = 32
+    NUM_EPOCHS = 50
+    INIT_LR = 0.0001
+    BATCH_SIZE = 512
 
     # Check if CUDA is available and set device accordingly
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -90,10 +90,10 @@ def main():
             self.classifier = nn.Sequential(
                 nn.Linear(512 * 1 * 1, 4096),
                 nn.ReLU(inplace=True),
-                nn.Dropout(),
+                nn.Dropout(0.2),
                 nn.Linear(4096, 4096),
                 nn.ReLU(inplace=True),
-                nn.Dropout(),
+                nn.Dropout(0.2),
                 nn.Linear(4096, num_classes),
             )
 
@@ -131,16 +131,16 @@ def main():
                 loss.backward()
                 optimizer.step()
                 running_loss += loss.item()
-                if i % 100 == 99:
-                    print(f'Epoch {epoch+1}, Batch {i+1}, Loss: {running_loss/100:.3f}')
+                if i % 10 == 9:
+                    print(f'Epoch {epoch+1}, Batch {i+1}, Loss: {running_loss/10:.3f}')
                     running_loss = 0.0
 
         print('Training beendet')
 
         # Speichere das trainierte Modell
-        os.makedirs(os.path.dirname(modelSavePath), exist_ok=True)
-        torch.save(model.state_dict(), modelSavePath)
-        print(f'Modell wurde unter {modelSavePath} gespeichert.')
+        #os.makedirs(os.path.dirname(modelSavePath), exist_ok=True)
+       #torch.save(model.state_dict(), modelSavePath)
+        #print(f'Modell wurde unter {modelSavePath} gespeichert.')
 
     # 6. Evaluation des Netzwerks
     model.eval()
