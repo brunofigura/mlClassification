@@ -13,8 +13,8 @@ import seaborn as sns
 def main():
 
     #Hyperparameter 
-    modelSavePath = './.gitignore/LeNet5CIFAR10.ckpt'
-    TRAIN_MODEL = False  # True, wenn das Modell trainiert werden soll, False, wenn es geladen werden soll
+    modelSavePath = './.gitignore/VGGCIFAR10.ckpt'
+    TRAIN_MODEL = True  # True, wenn das Modell trainiert werden soll, False, wenn es geladen werden soll
 
     NUM_EPOCHS = 5
     INIT_LR = 0.001
@@ -41,67 +41,67 @@ def main():
                                              shuffle=False, num_workers=2)
 
     # 3. Netzwerk definieren und auf das Gerät verschieben
-class VGG16(nn.Module):
-    def __init__(self, num_classes=10):
-        super(VGG16, self).__init__()
-        self.features = nn.Sequential(
-            # Conv Block 1
-            nn.Conv2d(3, 64, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(64, 64, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=2, stride=2),
+    class VGG16(nn.Module):
+        def __init__(self, num_classes=10):
+            super(VGG16, self).__init__()
+            self.features = nn.Sequential(
+                # Conv Block 1
+                nn.Conv2d(3, 64, kernel_size=3, padding=1),
+                nn.ReLU(inplace=True),
+                nn.Conv2d(64, 64, kernel_size=3, padding=1),
+                nn.ReLU(inplace=True),
+                nn.MaxPool2d(kernel_size=2, stride=2),
 
-            # Conv Block 2
-            nn.Conv2d(64, 128, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(128, 128, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=2, stride=2),
+                # Conv Block 2
+                nn.Conv2d(64, 128, kernel_size=3, padding=1),
+                nn.ReLU(inplace=True),
+                nn.Conv2d(128, 128, kernel_size=3, padding=1),
+                nn.ReLU(inplace=True),
+                nn.MaxPool2d(kernel_size=2, stride=2),
 
-            # Conv Block 3
-            nn.Conv2d(128, 256, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(256, 256, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(256, 256, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=2, stride=2),
+                # Conv Block 3
+                nn.Conv2d(128, 256, kernel_size=3, padding=1),
+                nn.ReLU(inplace=True),
+                nn.Conv2d(256, 256, kernel_size=3, padding=1),
+                nn.ReLU(inplace=True),
+                nn.Conv2d(256, 256, kernel_size=3, padding=1),
+                nn.ReLU(inplace=True),
+                nn.MaxPool2d(kernel_size=2, stride=2),
 
-            # Conv Block 4
-            nn.Conv2d(256, 512, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(512, 512, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(512, 512, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=2, stride=2),
+                # Conv Block 4
+                nn.Conv2d(256, 512, kernel_size=3, padding=1),
+                nn.ReLU(inplace=True),
+                nn.Conv2d(512, 512, kernel_size=3, padding=1),
+                nn.ReLU(inplace=True),
+                nn.Conv2d(512, 512, kernel_size=3, padding=1),
+                nn.ReLU(inplace=True),
+                nn.MaxPool2d(kernel_size=2, stride=2),
 
-            # Conv Block 5
-            nn.Conv2d(512, 512, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(512, 512, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(512, 512, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=2, stride=2),
-        )
+                # Conv Block 5
+                nn.Conv2d(512, 512, kernel_size=3, padding=1),
+                nn.ReLU(inplace=True),
+                nn.Conv2d(512, 512, kernel_size=3, padding=1),
+                nn.ReLU(inplace=True),
+                nn.Conv2d(512, 512, kernel_size=3, padding=1),
+                nn.ReLU(inplace=True),
+                nn.MaxPool2d(kernel_size=2, stride=2),
+            )
 
-        self.classifier = nn.Sequential(
-            nn.Linear(512 * 1 * 1, 4096),
-            nn.ReLU(inplace=True),
-            nn.Dropout(),
-            nn.Linear(4096, 4096),
-            nn.ReLU(inplace=True),
-            nn.Dropout(),
-            nn.Linear(4096, num_classes),
-        )
+            self.classifier = nn.Sequential(
+                nn.Linear(512 * 1 * 1, 4096),
+                nn.ReLU(inplace=True),
+                nn.Dropout(),
+                nn.Linear(4096, 4096),
+                nn.ReLU(inplace=True),
+                nn.Dropout(),
+                nn.Linear(4096, num_classes),
+            )
 
-    def forward(self, x):
-        x = self.features(x)
-        x = x.view(x.size(0), -1)
-        x = self.classifier(x)
-        return x
+        def forward(self, x):
+            x = self.features(x)
+            x = x.view(x.size(0), -1)
+            x = self.classifier(x)
+            return x
 
     print('==> Building model ..')
     model = VGG16()
