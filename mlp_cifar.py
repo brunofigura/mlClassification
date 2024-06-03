@@ -196,6 +196,9 @@ class Classifier:
               f'({100. * correct / len(self.test_loader.dataset):.0f}%)\n'
               f'Precision: {precision:.4f}, Recall: {recall:.4f}, F1: {f1:.04f}')
         
+        self.conf_matrix = confusion_matrix(all_labels, all_predictions)
+
+        
     def plot_val_train_losses(self):
         plt.figure(figsize=(10, 5))
         plt.plot(self.train_losses, label='Training Loss', color='blue')
@@ -206,10 +209,40 @@ class Classifier:
         plt.legend()
         plt.show()
 
+    def plot_confMatrix(self):
+        class_names = ['airplane', 'automobile', 'bird', 'cat', 'deer',
+               'dog', 'frog', 'horse', 'ship', 'truck']
+        
+        hyperparameters = {
+            'Epochs' : self.n_epochs,
+            'Initial Learn-Rate' : self.init_lr ,
+            'Batch Size' : self.batch_size
+        }
+        # Konvertiere die Hyperparameter in einen lesbaren String
+        hyperparameters_str = '\n'.join([f'{key}: {value}' for key, value in hyperparameters.items()])
+
+        # Plot Confusion Matrix
+        plt.figure(figsize=(8, 6))
+        sns.heatmap(self.conf_matrix, annot=True, fmt='d', cmap='Blues', cbar=False, 
+                    xticklabels=class_names, yticklabels=class_names)
+        plt.title('MLP - 2 Hidden Layers')
+        plt.xlabel('Predicted Labels')
+        plt.ylabel('True Labels')
+
+        # Füge eine Anmerkung mit den Hyperparametern hinzu
+        plt.annotate(hyperparameters_str, xy=(0.5, 1.05), xytext=(0.5, 1.1),
+                xycoords='axes fraction', textcoords='axes fraction',
+                fontsize=7, ha='center', va='center', bbox=dict(facecolor='none', edgecolor='black', boxstyle='round,pad=0.5'))
+
+        plt.xticks(rotation=45)  # Drehen Sie die Achsenbeschriftungen für bessere Lesbarkeit
+        plt.yticks(rotation=45)
+        plt.savefig('./confusion_Matrices/cm_MNIST_MLP_2_hiddenL.png')  # Speichern Sie die Confusion Matrix als PNG-Datei
+        plt.show()
+
 
 
 def main():
-    n_epochs = 1
+    n_epochs = 10
     save = False
     log_interval = 10
     init_lr = 0.01
@@ -224,6 +257,7 @@ def main():
     cl.plot_val_train_losses()
 
     cl.test()
+    cl.plot_confMatrix
 
 if __name__ == '__main__':
     main()
