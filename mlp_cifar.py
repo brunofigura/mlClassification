@@ -239,6 +239,12 @@ class Classifier:
         plt.savefig('./confusion_Matrices/cm_MNIST_MLP_2_hiddenL.png')  # Speichern Sie die Confusion Matrix als PNG-Datei
         plt.show()
 
+    def saveModelWheights(self):
+        modelSavePath = './trainedModels/mlp_cifar.ckpt'
+        os.makedirs(os.path.dirname(modelSavePath), exist_ok=True)
+        torch.save(self.network.state_dict(), modelSavePath)
+        print(f'Modell wurde unter {modelSavePath} gespeichert.')
+
 
 
 def main():
@@ -257,7 +263,9 @@ def main():
     cl.plot_val_train_losses()
 
     cl.test()
-    cl.plot_confMatrix
+    cl.plot_confMatrix()
+
+    cl.saveModelWheights()
 
 if __name__ == '__main__':
     main()
