@@ -13,7 +13,7 @@ import seaborn as sns
 def main():
 
     #Hyperparameter 
-    modelSavePath = './.gitignore/trainedModel/VGGCIFAR10.ckpt'
+    modelSavePath = './trainedModels/VGGCIFAR10.ckpt'
     TRAIN_MODEL = True  # True, wenn das Modell trainiert werden soll, False, wenn es geladen werden soll
 
     NUM_EPOCHS = 50
