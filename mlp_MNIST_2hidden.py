@@ -35,7 +35,7 @@ def main():
     std = train_data.data.float().std() / 255       # = 0.30810
 
     train_transforms = transforms.Compose([
-                                transforms.RandomRotation(5, fill=(0,)),    #Trainingsdatensatz um + - 5 Grad zufällig rotieren
+                                transforms.RandomRotation(5, fill=(0.2)),    #Trainingsdatensatz um + - 5 Grad zufällig rotieren
                                 transforms.RandomCrop(28, padding=2),       #2Pixel Rand erzeugen und davon 28x28 Pixel Crop nehmen
                                 transforms.ToTensor(),
                                 transforms.Normalize(mean=[mean], std=[std])
