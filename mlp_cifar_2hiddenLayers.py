@@ -25,7 +25,7 @@ class MLP(nn.Module):
             return x
         
 class Classifier:
-    def __init__(self, n_epochs, init_lr, momentum):
+    def __init__(self, n_epochs, init_lr):
 
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -34,11 +34,16 @@ class Classifier:
 
         self.n_epochs = n_epochs
         self.init_lr = init_lr
-        self.momentum = momentum
-        self.img_res = 32 * 32 * 3
+        self.img_res = 28 * 28 * 3      #eigentlich 32x32x3 aber es wird ein 28 Cropped Bild genommen
         self.num_classes = 10
 
+
+
+           
+
         transform = transforms.Compose([
+                transforms.RandomRotation(5, fill=(0.2)),    #Trainingsdatensatz um + - 5 Grad zufällig rotieren
+                transforms.RandomCrop(28, padding=2),       #2Pixel Rand erzeugen und davon 28x28 Pixel Crop nehmen
                 transforms.ToTensor(),
                 transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
         ])
@@ -54,7 +59,8 @@ class Classifier:
                             train=False,
                             download=True,
                             transform=transform)
-        
+
+
         #Validierungs-Set vom Trainingsdatensatz erzeugen
         num_train = len(self.train_dataset)
         num_valid = int(self.valid_ratio * num_train)
@@ -81,6 +87,8 @@ class Classifier:
         self.optimizer = optim.Adam(self.network.parameters(), self.init_lr)
         self.criterion = nn.CrossEntropyLoss()  # Use CrossEntropyLoss instead of NLLLoss
         
+        self.valid_batch_losses = []
+        self.train_batch_losses = []
         self.train_losses = []
         self.train_counter = []
         self.valid_losses = []
@@ -207,10 +215,10 @@ class Classifier:
 
 
 def main():
-    n_epochs = 10
+    n_epochs = 20
     save = False
     log_interval = 10
-    init_lr = 0.01
+    init_lr = 0.0001
     cl = Classifier(n_epochs, init_lr)
     cl.test()
 

@@ -82,9 +82,11 @@ class CNN_CIFAR_Classifier:
 
         self.n_epochs = n_epochs
         self.init_lr = init_lr
-        self.img_res = 32 * 32 * 3
+        self.img_res = 28 * 28 * 3      #32x32 gecropped auf 28+28
 
         transform = transforms.Compose([
+                transforms.RandomRotation(5, fill=(0.2)),    #Trainingsdatensatz um + - 5 Grad zufällig rotieren
+                transforms.RandomCrop(28, padding=2),       #2Pixel Rand erzeugen und davon 28x28 Pixel Crop nehmen
                 transforms.ToTensor(),
                 transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
         ])
