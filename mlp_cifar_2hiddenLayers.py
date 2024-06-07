@@ -16,11 +16,15 @@ class MLP(nn.Module):
             self.fc1 = nn.Linear(input_size, 128)
             self.relu = nn.ReLU()
             self.fc2 = nn.Linear(128, output_size)
+            self.b_norm1 = nn.BatchNorm1d(128)
+            self.dropout = nn.Dropout(0.1)
 
         def forward(self, x):
             x = x.view(-1, self.input_size)  # Flatten the image
             x = self.fc1(x)
+            x = self.b_norm1(x)
             x = self.relu(x)
+            x = self.dropout(x)
             x = self.fc2(x)
             return x
         
@@ -192,7 +196,7 @@ class Classifier:
         plt.figure(figsize=(8, 6))
         sns.heatmap(self.conf_matrix, annot=True, fmt='d', cmap='Blues', cbar=False, 
                     xticklabels=class_names, yticklabels=class_names)
-        plt.title('MLP - 2 Hidden Layers')
+        plt.title('CIFAR -MLP 2 Hidden Layers')
         plt.xlabel('Predicted Labels')
         plt.ylabel('True Labels')
 
@@ -203,7 +207,7 @@ class Classifier:
 
         plt.xticks(rotation=45)  # Drehen Sie die Achsenbeschriftungen für bessere Lesbarkeit
         plt.yticks(rotation=45)
-        plt.savefig('./confusion_Matrices/cm_MNIST_MLP_2_hiddenL.png')  # Speichern Sie die Confusion Matrix als PNG-Datei
+        plt.savefig('./confusion_Matrices/cm_CIFAR_MLP_2_hiddenL.png')  # Speichern Sie die Confusion Matrix als PNG-Datei
         plt.show()
 
     def saveModelWheights(self):

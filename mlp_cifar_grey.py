@@ -58,13 +58,14 @@ class Classifier:
         self.n_epochs = n_epochs
         self.init_lr = init_lr
         self.momentum = momentum
-        self.img_res = 32 * 32  # Grauwertbilder haben nur eine Kanaldimension
+        self.img_res = 28 * 28 * 1  # Grauwertbilder haben nur eine Kanaldimension
         self.num_classes = 10
 
         transform = transforms.Compose([
-            transforms.Grayscale(num_output_channels=1),  # Konvertiere in Graustufen
-            transforms.ToTensor(),
-            transforms.Normalize((0.5,), (0.5,)),  # Normalisiere Graustufenbilder
+                transforms.RandomRotation(5, fill=(0.2)),    #Trainingsdatensatz um + - 5 Grad zufällig rotieren
+                transforms.RandomCrop(28, padding=2),       #2Pixel Rand erzeugen und davon 28x28 Pixel Crop nehmen
+                transforms.ToTensor(),
+                transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
         ])
 
         self.train_dataset = torchvision.datasets.CIFAR10(root='./data',
@@ -147,22 +148,35 @@ class Classifier:
               f'Accuracy: {correct}/{len(self.valid_loader.dataset)}'
               f'({100. * correct / len(self.valid_loader.dataset):.0f}%)\n')
 
-    def test(self):
+        def test(self):
         self.network.eval()
         test_loss = 0
         correct = 0
+        all_predictions = []
+        all_labels = []
         with torch.no_grad():
-            for data, target in self.test_loader:
-                data, target = data.to(self.device), target.to(self.device)
-                output = self.network(data)
-                test_loss += self.criterion(output, target).item()
+            for images, labels in self.test_loader:
+                images, labels = images.to(self.device), labels.to(self.device)
+                output = self.network(images)
+                test_loss += self.criterion(output, labels).item()
                 pred = output.data.max(1, keepdim=True)[1]
-                correct += pred.eq(target.data.view_as(pred)).sum().item()
+                correct += pred.eq(labels.data.view_as(pred)).sum().item()
+                all_predictions.extend(pred.cpu().numpy())
+                all_labels.extend(labels.cpu().numpy())
+
         test_loss /= len(self.test_loader)
         self.test_losses.append(test_loss)
+        accuracy = correct / len(self.test_loader.dataset)
+        precision = precision_score(all_labels, all_predictions, average='macro')
+        recall = recall_score(all_labels, all_predictions, average='macro')
+        f1 = f1_score(all_labels, all_predictions, average='macro')
         print(f'\nTest set: Avg. loss: {test_loss:.4f}, '
               f'Accuracy: {correct}/{len(self.test_loader.dataset)}'
-              f'({100. * correct / len(self.test_loader.dataset):.0f}%)\n')
+              f'({100. * correct / len(self.test_loader.dataset):.0f}%)\n'
+              f'Precision: {precision:.4f}, Recall: {recall:.4f}, F1: {f1:.04f}')
+        
+        self.conf_matrix = confusion_matrix(all_labels, all_predictions)
+
         
     def plot_val_train_losses(self):
         plt.figure(figsize=(10, 5))
@@ -173,6 +187,42 @@ class Classifier:
         plt.title('Training and Validation Losses')
         plt.legend()
         plt.show()
+
+    def plot_confMatrix(self):
+        class_names = ['airplane', 'automobile', 'bird', 'cat', 'deer',
+               'dog', 'frog', 'horse', 'ship', 'truck']
+        
+        hyperparameters = {
+            'Epochs' : self.n_epochs,
+            'Initial Learn-Rate' : self.init_lr ,
+            'Batch Size' : self.batch_size
+        }
+        # Konvertiere die Hyperparameter in einen lesbaren String
+        hyperparameters_str = '\n'.join([f'{key}: {value}' for key, value in hyperparameters.items()])
+
+        # Plot Confusion Matrix
+        plt.figure(figsize=(8, 6))
+        sns.heatmap(self.conf_matrix, annot=True, fmt='d', cmap='Blues', cbar=False, 
+                    xticklabels=class_names, yticklabels=class_names)
+        plt.title('CIFAR Grey - MLP 9 Hidden Layers')
+        plt.xlabel('Predicted Labels')
+        plt.ylabel('True Labels')
+
+        # Füge eine Anmerkung mit den Hyperparametern hinzu
+        plt.annotate(hyperparameters_str, xy=(0.5, 1.05), xytext=(0.5, 1.1),
+                xycoords='axes fraction', textcoords='axes fraction',
+                fontsize=7, ha='center', va='center', bbox=dict(facecolor='none', edgecolor='black', boxstyle='round,pad=0.5'))
+
+        plt.xticks(rotation=45)  # Drehen Sie die Achsenbeschriftungen für bessere Lesbarkeit
+        plt.yticks(rotation=45)
+        plt.savefig('./confusion_Matrices/cm_CIFAR_grey_MLP_9_hiddenL.png')  # Speichern Sie die Confusion Matrix als PNG-Datei
+        plt.show()
+
+    def saveModelWheights(self):
+        modelSavePath = './trainedModels/mlp_cifar_grey_9_hiddenL.ckpt'
+        os.makedirs(os.path.dirname(modelSavePath), exist_ok=True)
+        torch.save(self.network.state_dict(), modelSavePath)
+        print(f'Modell wurde unter {modelSavePath} gespeichert.')
 
 
 def main():

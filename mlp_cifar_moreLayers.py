@@ -66,7 +66,7 @@ class MLP(nn.Module):
             return x
         
 class Classifier:
-    def __init__(self, n_epochs, init_lr, momentum):
+    def __init__(self, n_epochs, init_lr):
 
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -75,7 +75,6 @@ class Classifier:
 
         self.n_epochs = n_epochs
         self.init_lr = init_lr
-        self.momentum = momentum
         self.img_res = 28 * 28 * 3      #32x32 gecropped auf 28+28
         self.num_classes = 10
 
@@ -121,7 +120,7 @@ class Classifier:
         self.network = MLP(self.img_res, self.num_classes)
         self.network = self.network.to(self.device)
 
-        self.optimizer = optim.SGD(self.network.parameters(), self.init_lr, self.momentum)
+        self.optimizer = optim.Adam(self.network.parameters(), self.init_lr)
         self.criterion = nn.CrossEntropyLoss()  # Use CrossEntropyLoss instead of NLLLoss
         
         self.train_losses = []
@@ -227,7 +226,7 @@ class Classifier:
         plt.figure(figsize=(8, 6))
         sns.heatmap(self.conf_matrix, annot=True, fmt='d', cmap='Blues', cbar=False, 
                     xticklabels=class_names, yticklabels=class_names)
-        plt.title('MLP - 2 Hidden Layers')
+        plt.title('CIFAR - MLP 9 Hidden Layers')
         plt.xlabel('Predicted Labels')
         plt.ylabel('True Labels')
 
@@ -238,11 +237,11 @@ class Classifier:
 
         plt.xticks(rotation=45)  # Drehen Sie die Achsenbeschriftungen für bessere Lesbarkeit
         plt.yticks(rotation=45)
-        plt.savefig('./confusion_Matrices/cm_MNIST_MLP_2_hiddenL.png')  # Speichern Sie die Confusion Matrix als PNG-Datei
+        plt.savefig('./confusion_Matrices/cm_CIFAR_MLP_9_hiddenL.png')  # Speichern Sie die Confusion Matrix als PNG-Datei
         plt.show()
 
     def saveModelWheights(self):
-        modelSavePath = './trainedModels/mlp_cifar.ckpt'
+        modelSavePath = './trainedModels/mlp_cifar_9_hiddenL.ckpt'
         os.makedirs(os.path.dirname(modelSavePath), exist_ok=True)
         torch.save(self.network.state_dict(), modelSavePath)
         print(f'Modell wurde unter {modelSavePath} gespeichert.')
@@ -253,8 +252,7 @@ def main():
     n_epochs = 10
     save = False
     log_interval = 10
-    init_lr = 0.01
-    momentum = 0.9
+    init_lr = 0.0001
     cl = Classifier(n_epochs, init_lr, momentum)
     cl.test()
 
