@@ -9,7 +9,7 @@ from sklearn.metrics import precision_score, recall_score, f1_score, confusion_m
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-class CNN_CIFAR(nn.Module):     #VGG architecture
+class CNN_CIFAR_COMPLEX(nn.Module):     #VGG architecture
     def __init__(self, num_classes=10):
         super(CNN_CIFAR, self).__init__()
         self.features = nn.Sequential(
@@ -57,9 +57,11 @@ class CNN_CIFAR(nn.Module):     #VGG architecture
 
         self.classifier = nn.Sequential(
             nn.Linear(512 * 1 * 1, 4096),
+            nn.BatchNorm1d(4096),
             nn.ReLU(inplace=True),
             nn.Dropout(0.2),
             nn.Linear(4096, 4096),
+            nn.BatchNorm1d(4096),#zum ausprobieren
             nn.ReLU(inplace=True),
             nn.Dropout(0.2),
             nn.Linear(4096, num_classes),
@@ -123,7 +125,7 @@ class CNN_CIFAR_Classifier:
 
 
 
-        self.network = CNN_CIFAR()
+        self.network = CNN_CIFAR_COMPLEX()
         self.network = self.network.to(self.device)
 
         self.optimizer = optim.Adam(self.network.parameters(), self.init_lr)
@@ -231,7 +233,7 @@ class CNN_CIFAR_Classifier:
         plt.figure(figsize=(8, 6))
         sns.heatmap(self.conf_matrix, annot=True, fmt='d', cmap='Blues', cbar=False, 
                     xticklabels=class_names, yticklabels=class_names)
-        plt.title('CNN - VGG')
+        plt.title('Cifar10 - CNN Typ VGG')
         plt.xlabel('Predicted Labels')
         plt.ylabel('True Labels')
 
@@ -242,11 +244,11 @@ class CNN_CIFAR_Classifier:
 
         plt.xticks(rotation=45)  # Drehen Sie die Achsenbeschriftungen für bessere Lesbarkeit
         plt.yticks(rotation=45)
-        plt.savefig('./confusion_Matrices/CIFAR_Cnn_Classifier.png')  # Speichern Sie die Confusion Matrix als PNG-Datei
+        plt.savefig('./confusion_Matrices/CIFAR_Cnn_COMPLEX_Classifier.png')  # Speichern Sie die Confusion Matrix als PNG-Datei
         plt.show()
 
     def saveModelWheights(self):
-        modelSavePath = './trainedModels/cnn_cifar.ckpt'
+        modelSavePath = './trainedModels/cnn_cifar_complex.ckpt'
         os.makedirs(os.path.dirname(modelSavePath), exist_ok=True)
         torch.save(self.network.state_dict(), modelSavePath)
         print(f'Modell wurde unter {modelSavePath} gespeichert.')

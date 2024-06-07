@@ -10,23 +10,24 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 
-class CNN_MNIST(nn.Module):
+
+class CNN_CIFAR(nn.Module):
     def __init__(self, num_classes):
-        super(CNN_MNIST, self).__init__()
-        self.conv1 = nn.Conv2d(1, 6, kernel_size=5) #passt in Channels an, da MNIST Graustufenbilder sind
+        super(CNN_CIFAR, self).__init__()
+        self.conv1 = nn.Conv2d(3, 6, kernel_size=5)
         self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
         self.conv2 = nn.Conv2d(6, 16, kernel_size=5)
-        self.fc1 = nn.Linear(16 * 5 * 5, 120)
+        self.fc1 = nn.Linear(16 * 4 * 4, 120)
         self.fc2 = nn.Linear(120, 84)
         self.fc3 = nn.Linear(84, num_classes)
+        self.dropout = nn.Dropout(0.2)
         self.b_norm1 = nn.BatchNorm1d(120)
         self.b_norm2 = nn.BatchNorm1d(84)
-        self.dropout = nn.Dropout(0.2)
-
+ 
     def forward(self, x):
         x = self.pool(nn.functional.relu(self.conv1(x)))
         x = self.pool(nn.functional.relu(self.conv2(x)))
-        x = x.view(-1, 16 * 5 * 5)
+        x = x.view(-1, 16 * 4 * 4)
         x = self.fc1(x)
         x = self.b_norm1(x)
         x = nn.functional.relu(x)
@@ -38,31 +39,38 @@ class CNN_MNIST(nn.Module):
         x = self.fc3(x)
         return x
     
-class MNIST_Cnn_Classifier:
+class CNN_CIFAR_Classifier:
     def __init__(self, n_epochs, init_lr):
-         
+        
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         torch.backends.cudnn.benchmark = False # wirft sonst Fehlermeldungen auf -> hilft auch nicht aber der Code läuft 
-        
+
         self.batch_size = 64
         self.valid_ratio = 0.1
 
         self.n_epochs = n_epochs
         self.init_lr = init_lr
-        self.img_res = 28 * 28
+        self.img_res = 28 * 28 * 3      #32x32 gecropped auf 28+28
         self.num_classes = 10
 
         transform = transforms.Compose([
-            transforms.Resize((32, 32)),  # Hochskalieren auf 32x32
-            transforms.ToTensor(),
-            transforms.Normalize((0.1307,), (0.3081,))  # Normalisieren und Standartabweichung des MNIST Datensatzen ( vorher waren die Werte 0.5 und 0.5)
+                transforms.RandomRotation(5, fill=(0.2)),    #Trainingsdatensatz um + - 5 Grad zufällig rotieren
+                transforms.RandomCrop(28, padding=2),       #2Pixel Rand erzeugen und davon 28x28 Pixel Crop nehmen
+                transforms.ToTensor(),
+                transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
         ])
 
-        self.train_dataset = torchvision.datasets.MNIST(root='./data', train=True,
-                                            download=True, transform=transform)
-        
-        self.test_dataset = torchvision.datasets.MNIST(root='./data', train=True,
-                                            download=True, transform=transform)
+
+
+        self.train_dataset = torchvision.datasets.CIFAR10(root='./data',
+                                train=True,
+                                download=True,
+                                transform=transform)
+
+        self.test_dataset = torchvision.datasets.CIFAR10(root='./data',
+                            train=False,
+                            download=True,
+                            transform=transform)
         
         #Validierungs-Set vom Trainingsdatensatz erzeugen
         num_train = len(self.train_dataset)
@@ -81,7 +89,10 @@ class MNIST_Cnn_Classifier:
         self.test_loader = torch.utils.data.DataLoader(self.test_dataset,
                                     batch_size=self.batch_size)
         
-        self.network = CNN_MNIST(self.num_classes)
+
+
+
+        self.network = CNN_CIFAR(self.num_classes)
         self.network = self.network.to(self.device)
 
         self.optimizer = optim.Adam(self.network.parameters(), self.init_lr)
@@ -174,8 +185,8 @@ class MNIST_Cnn_Classifier:
         plt.show()
 
     def plot_confMatrix(self):
-        class_names = ['zero', 'one', 'two', 'three', 'four',
-               'five', 'six', 'seven', 'eight', 'nine']
+        class_names = ['airplane', 'automobile', 'bird', 'cat', 'deer',
+               'dog', 'frog', 'horse', 'ship', 'truck']
         
         hyperparameters = {
             'Epochs' : self.n_epochs,
@@ -189,7 +200,7 @@ class MNIST_Cnn_Classifier:
         plt.figure(figsize=(8, 6))
         sns.heatmap(self.conf_matrix, annot=True, fmt='d', cmap='Blues', cbar=False, 
                     xticklabels=class_names, yticklabels=class_names)
-        plt.title('MNIST - CNN Typ LeNet5')
+        plt.title('CNN - Typ LeNet5')
         plt.xlabel('Predicted Labels')
         plt.ylabel('True Labels')
 
@@ -200,11 +211,11 @@ class MNIST_Cnn_Classifier:
 
         plt.xticks(rotation=45)  # Drehen Sie die Achsenbeschriftungen für bessere Lesbarkeit
         plt.yticks(rotation=45)
-        plt.savefig('./confusion_Matrices/cm_MNIST_CNN.png')  # Speichern Sie die Confusion Matrix als PNG-Datei
+        plt.savefig('./confusion_Matrices/CIFAR_Cnn_Classifier.png')  # Speichern Sie die Confusion Matrix als PNG-Datei
         plt.show()
 
     def saveModelWheights(self):
-        modelSavePath = './trainedModels/MNIST_Cnn_Classifier.ckpt'
+        modelSavePath = './trainedModels/cnn_cifar.ckpt'
         os.makedirs(os.path.dirname(modelSavePath), exist_ok=True)
         torch.save(self.network.state_dict(), modelSavePath)
         print(f'Modell wurde unter {modelSavePath} gespeichert.')
@@ -212,10 +223,10 @@ class MNIST_Cnn_Classifier:
 
 
 def main():
-    n_epochs = 10
+    n_epochs = 100
     log_interval = 10
-    init_lr = 0.001
-    cl = MNIST_Cnn_Classifier(n_epochs, init_lr)
+    init_lr = 0.0001
+    cl = CNN_CIFAR_Classifier(n_epochs, init_lr)
     cl.test()
 
     for epoch in range(1, n_epochs + 1):
