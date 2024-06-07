@@ -11,7 +11,7 @@ import seaborn as sns
 
 class CNN_CIFAR_COMPLEX(nn.Module):     #VGG architecture
     def __init__(self, num_classes=10):
-        super(CNN_CIFAR, self).__init__()
+        super(CNN_CIFAR_COMPLEX, self).__init__()
         self.features = nn.Sequential(
             # Conv Block 1
             nn.Conv2d(3, 64, kernel_size=3, padding=1),
