@@ -253,7 +253,7 @@ def main():
     save = False
     log_interval = 10
     init_lr = 0.0001
-    cl = Classifier(n_epochs, init_lr, momentum)
+    cl = Classifier(n_epochs, init_lr)
     cl.test()
 
     for epoch in range(1, n_epochs + 1):

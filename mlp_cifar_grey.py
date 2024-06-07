@@ -148,7 +148,7 @@ class Classifier:
               f'Accuracy: {correct}/{len(self.valid_loader.dataset)}'
               f'({100. * correct / len(self.valid_loader.dataset):.0f}%)\n')
 
-        def test(self):
+    def test(self):
         self.network.eval()
         test_loss = 0
         correct = 0
