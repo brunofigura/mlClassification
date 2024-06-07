@@ -144,6 +144,7 @@ class CNN_CIFAR_Classifier:
 
     def train(self, epoch, log_interval):
         self.network.train()
+        train_loss = 0
         for batch_idx, (images, labels) in enumerate(self.train_loader):
             images, labels = images.to(self.device), labels.to(self.device)
             self.optimizer.zero_grad()
@@ -151,14 +152,13 @@ class CNN_CIFAR_Classifier:
             loss = self.criterion(output, labels)
             loss.backward()
             self.optimizer.step()
+            train_loss += loss.item()
             if batch_idx % log_interval == 0:
                 print(f'Train Epoch: {epoch} '
                       f'[{batch_idx * len(images)}/{len(self.train_loader.dataset)} '
                       f'({100. * batch_idx / len(self.train_loader):.0f}%)]  Loss: {loss.item():.6f}', end='\r')
-                self.train_losses.append(loss.item())
-                self.train_counter.append(
-                    (batch_idx * self.batch_size) + ((epoch - 1) * len(self.train_loader.dataset)))
-            
+        train_loss /= len(self.train_loader)
+        self.train_losses.append(train_loss)
 
     def validate(self):
         self.network.eval()
@@ -211,7 +211,7 @@ class CNN_CIFAR_Classifier:
         plt.figure(figsize=(10, 5))
         plt.plot(self.train_losses, label='Training Loss', color='blue')
         plt.plot(self.valid_losses, label='Validation Loss', color='orange')
-        plt.xlabel('Iterations')
+        plt.xlabel('Epochs')
         plt.ylabel('Loss')
         plt.title('Training and Validation Losses')
         plt.legend()
