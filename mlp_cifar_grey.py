@@ -115,21 +115,21 @@ class Classifier:
 
     def train(self, epoch, log_interval):
         self.network.train()
-        for batch_idx, (data, target) in enumerate(self.train_loader):
-            data, target = data.to(self.device), target.to(self.device)
+        train_loss = 0
+        for batch_idx, (images, labels) in enumerate(self.train_loader):
+            images, labels = images.to(self.device), labels.to(self.device)
             self.optimizer.zero_grad()
-            output = self.network(data)
-            loss = self.criterion(output, target)
+            output = self.network(images)
+            loss = self.criterion(output, labels)
             loss.backward()
             self.optimizer.step()
+            train_loss += loss.item()
             if batch_idx % log_interval == 0:
                 print(f'Train Epoch: {epoch} '
-                      f'[{batch_idx * len(data)}/{len(self.train_loader.dataset)} '
+                      f'[{batch_idx * len(images)}/{len(self.train_loader.dataset)} '
                       f'({100. * batch_idx / len(self.train_loader):.0f}%)]  Loss: {loss.item():.6f}', end='\r')
-                self.train_losses.append(loss.item())
-                self.train_counter.append(
-                    (batch_idx * self.batch_size) + ((epoch - 1) * len(self.train_loader.dataset)))
-            
+        train_loss /= len(self.train_loader)
+        self.train_losses.append(train_loss)
 
     def validate(self):
         self.network.eval()
@@ -182,11 +182,12 @@ class Classifier:
         plt.figure(figsize=(10, 5))
         plt.plot(self.train_losses, label='Training Loss', color='blue')
         plt.plot(self.valid_losses, label='Validation Loss', color='orange')
-        plt.xlabel('Iterations')
+        plt.xlabel('Epochs')
         plt.ylabel('Loss')
         plt.title('Training and Validation Losses')
         plt.legend()
         plt.show()
+
 
     def plot_confMatrix(self):
         class_names = ['airplane', 'automobile', 'bird', 'cat', 'deer',
