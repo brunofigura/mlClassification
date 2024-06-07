@@ -220,7 +220,7 @@ class Classifier:
 
 
 def main():
-    n_epochs = 5
+    n_epochs = 200
     save = False
     log_interval = 10
     init_lr = 0.0001
