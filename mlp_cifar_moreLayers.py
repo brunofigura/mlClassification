@@ -211,6 +211,14 @@ class Classifier:
         plt.ylabel('Loss')
         plt.title('Training and Validation Losses')
         plt.legend()
+
+        # Save the plot to a directory
+        directory = './loss_plots'
+        os.makedirs(directory, exist_ok=True)
+        plot_filename = f'TrainValLoss_cnn_cifar_{self.n_epochs}.png'
+        plot_path = os.path.join(directory, plot_filename)
+        plt.savefig(plot_path)
+        print(f'Plot gespeichert unter {plot_path}')
         plt.show()
 
         
