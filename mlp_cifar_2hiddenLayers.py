@@ -214,11 +214,20 @@ class Classifier:
         plt.savefig('./confusion_Matrices/cm_CIFAR_MLP_2_hiddenL.png')  # Speichern Sie die Confusion Matrix als PNG-Datei
         plt.show()
 
-    def saveModelWheights(self):
-        modelSavePath = './trainedModels/mlp_cifar.ckpt'
+    def saveModelWeights(self, epoch):
+        modelSavePath = f'./trainedModels/mlp2_cifar_epoch_{epoch}.ckpt'
         os.makedirs(os.path.dirname(modelSavePath), exist_ok=True)
         torch.save(self.network.state_dict(), modelSavePath)
         print(f'Modell wurde unter {modelSavePath} gespeichert.')
+
+    def loadModelWeights(self, epoch):
+        modelLoadPath = f'./trainedModels/mlp2_cifar_epoch_{epoch}.ckpt'
+        if os.path.exists(modelLoadPath):
+            self.network.load_state_dict(torch.load(modelLoadPath))
+            self.network.to(self.device)
+            print(f'Modell wurde aus {modelLoadPath} geladen.')
+        else:
+            print(f'Keine gespeicherten Gewichte unter {modelLoadPath} gefunden.')
 
 
 
