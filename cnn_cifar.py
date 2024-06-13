@@ -42,15 +42,19 @@ class CNN_CIFAR(nn.Module):
 class CNN_CIFAR_Classifier:
     def __init__(self, n_epochs, init_lr):
         
+        
+        
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        torch.backends.cudnn.benchmark = False # wirft sonst Fehlermeldungen auf -> hilft auch nicht aber der Code läuft 
+        
+        #Legt ein Seed fest, damit die Datensätze immer GLEICH zufällig gemischt werden, für reproduzierbare Ergebnisse
+        torch.manual_seed(42)
 
-        self.batch_size = 64
+        self.batch_size = 128
         self.valid_ratio = 0.1
 
         self.n_epochs = n_epochs
         self.init_lr = init_lr
-        self.img_res = 28 * 28 * 3      #32x32 gecropped auf 28+28
+        self.img_res = 28 * 28 * 3      #32x32 gecropped auf 28x28
         self.num_classes = 10
 
         transform = transforms.Compose([
@@ -223,7 +227,7 @@ class CNN_CIFAR_Classifier:
 
 
 def main():
-    n_epochs = 100
+    n_epochs = 200
     log_interval = 10
     init_lr = 0.0001
     cl = CNN_CIFAR_Classifier(n_epochs, init_lr)

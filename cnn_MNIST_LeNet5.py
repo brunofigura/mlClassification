@@ -42,9 +42,11 @@ class MNIST_Cnn_Classifier:
     def __init__(self, n_epochs, init_lr):
          
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        torch.backends.cudnn.benchmark = False # wirft sonst Fehlermeldungen auf -> hilft auch nicht aber der Code läuft 
-        
-        self.batch_size = 64
+       
+        #Legt ein Seed fest, damit die Datensätze immer GLEICH zufällig gemischt werden, für reproduzierbare Ergebnisse
+        torch.manual_seed(42)
+
+        self.batch_size = 128
         self.valid_ratio = 0.1
 
         self.n_epochs = n_epochs

@@ -33,7 +33,10 @@ class Classifier:
 
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-        self.batch_size = 64
+        #Legt ein Seed fest, damit die Datensätze immer GLEICH zufällig gemischt werden, für reproduzierbare Ergebnisse
+        torch.manual_seed(42)
+
+        self.batch_size = 128
         self.valid_ratio = 0.1
 
         self.n_epochs = n_epochs
