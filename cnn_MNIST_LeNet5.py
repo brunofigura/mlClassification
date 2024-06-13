@@ -232,9 +232,9 @@ class MNIST_Cnn_Classifier:
 
 
 def main():
-    n_epochs = 10
+    n_epochs = 200
     log_interval = 10
-    init_lr = 0.001
+    init_lr = 0.0001
     cl = MNIST_Cnn_Classifier(n_epochs, init_lr)
     cl.test()
 
@@ -247,7 +247,7 @@ def main():
     cl.test()
     cl.plot_confMatrix()
 
-    cl.saveModelWheights()
+    cl.saveModelWeights(n_epochs)
 
 if __name__ == '__main__':
     main()
