@@ -139,7 +139,7 @@ class CNN_CIFAR_Classifier:
 
 
         # Netzwerk "laden"
-        self.network = CNN_CIFAR(self.num_classes)
+        self.network = CNN_CIFAR_COMPLEX(self.num_classes)
         self.network = self.network.to(self.device)
 
         # Algorithmus für den Gradientenabstieg festlegen
