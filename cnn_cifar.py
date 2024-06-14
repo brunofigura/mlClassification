@@ -9,49 +9,43 @@ from sklearn.metrics import precision_score, recall_score, f1_score, confusion_m
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-class MLP(nn.Module):
-    def __init__(self, input_size, output_size):
-        super(MLP, self).__init__()
-        self.input_size = input_size
-        self.fc1 = nn.Linear(input_size, 4000)
-        self.relu = nn.ReLU()
-        self.fc2 = nn.Linear(4000, 3250)
-        self.fc3 = nn.Linear(3250, 1659) 
-        self.fc4 = nn.Linear(1659, 600)
-        self.fc5 = nn.Linear(600, 250)
-        self.fc6 = nn.Linear(250, 100)
-        self.fc9 = nn.Linear(100, output_size)
-        self.dropout = nn.Dropout(0.2)
 
+
+class CNN_CIFAR(nn.Module):
+    def __init__(self, num_classes):
+        super(CNN_CIFAR, self).__init__()
+        self.conv1 = nn.Conv2d(3, 6, kernel_size=5)
+        self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
+        self.conv2 = nn.Conv2d(6, 16, kernel_size=5)
+        self.fc1 = nn.Linear(16 * 4 * 4, 120)
+        self.fc2 = nn.Linear(120, 84)
+        self.fc3 = nn.Linear(84, num_classes)
+        self.dropout = nn.Dropout(0.2)
+        self.b_norm1 = nn.BatchNorm1d(120)
+        self.b_norm2 = nn.BatchNorm1d(84)
+ 
     def forward(self, x):
-        x = x.view(-1, self.input_size)  # Flatten the image
-        x = self.dropout(x)
+        x = self.pool(nn.functional.relu(self.conv1(x)))
+        x = self.pool(nn.functional.relu(self.conv2(x)))
+        x = x.view(-1, 16 * 4 * 4)
         x = self.fc1(x)
-        x = self.relu(x)
+        x = self.b_norm1(x)
+        x = nn.functional.relu(x)
         x = self.dropout(x)
         x = self.fc2(x)
-        x = self.relu(x)
+        x = self.b_norm2(x)
+        x = nn.functional.relu(x)
         x = self.dropout(x)
         x = self.fc3(x)
-        x = self.relu(x)
-        x = self.dropout(x)
-        x = self.fc4(x)
-        x = self.relu(x)
-        x = self.dropout(x)
-        x = self.fc5(x)
-        x = self.relu(x)
-        x = self.dropout(x)
-        x = self.fc6(x)
-        x = self.relu(x)
-        x = self.dropout(x)
-        x = self.fc9(x)
         return x
+    
+class CNN_CIFAR_Classifier:
+    def __init__(self, n_epochs, init_lr):
         
-class Classifier:
-    def __init__(self, n_epochs, init_lr, momentum):
-
+        
+        
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
+        
         #Legt ein Seed fest, damit die Datensätze immer GLEICH zufällig gemischt werden, für reproduzierbare Ergebnisse
         torch.manual_seed(42)
 
@@ -60,8 +54,7 @@ class Classifier:
 
         self.n_epochs = n_epochs
         self.init_lr = init_lr
-        self.momentum = momentum
-        self.img_res = 28 * 28 * 1  # Grauwertbilder haben nur eine Kanaldimension
+        self.img_res = 28 * 28 * 3      #32x32 gecropped auf 28x28
         self.num_classes = 10
 
         transform = transforms.Compose([
@@ -70,6 +63,8 @@ class Classifier:
                 transforms.ToTensor(),
                 transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
         ])
+
+
 
         self.train_dataset = torchvision.datasets.CIFAR10(root='./data',
                                 train=True,
@@ -97,11 +92,14 @@ class Classifier:
 
         self.test_loader = torch.utils.data.DataLoader(self.test_dataset,
                                     batch_size=self.batch_size)
+        
 
-        self.network = MLP(self.img_res, self.num_classes)
+
+
+        self.network = CNN_CIFAR(self.num_classes)
         self.network = self.network.to(self.device)
 
-        self.optimizer = optim.SGD(self.network.parameters(), self.init_lr, self.momentum)
+        self.optimizer = optim.Adam(self.network.parameters(), self.init_lr)
         self.criterion = nn.CrossEntropyLoss()  # Use CrossEntropyLoss instead of NLLLoss
         
         self.train_losses = []
@@ -114,7 +112,6 @@ class Classifier:
         
         total_params = sum(p.numel() for p in self.network.parameters() if p.requires_grad)
         print(f'Total number of trainable parameters: {total_params}')
-
 
     def train(self, epoch, log_interval):
         self.network.train()
@@ -139,12 +136,12 @@ class Classifier:
         valid_loss = 0
         correct = 0
         with torch.no_grad():
-            for data, target in self.valid_loader:
-                data, target = data.to(self.device), target.to(self.device)
-                output = self.network(data)
-                valid_loss += self.criterion(output, target).item()
+            for images, labels in self.valid_loader:
+                images, labels = images.to(self.device), labels.to(self.device)
+                output = self.network(images)
+                valid_loss += self.criterion(output, labels).item()
                 pred = output.data.max(1, keepdim=True)[1]
-                correct += pred.eq(target.data.view_as(pred)).sum().item()
+                correct += pred.eq(labels.data.view_as(pred)).sum().item()
             valid_loss /= len(self.valid_loader)
             self.valid_losses.append(valid_loss)
             print(f'\nValidation set: Avg. loss: {valid_loss:.4f}, '
@@ -199,7 +196,6 @@ class Classifier:
         print(f'Plot gespeichert unter {plot_path}')
         plt.show()
 
-
     def plot_confMatrix(self):
         class_names = ['airplane', 'automobile', 'bird', 'cat', 'deer',
                'dog', 'frog', 'horse', 'ship', 'truck']
@@ -216,7 +212,7 @@ class Classifier:
         plt.figure(figsize=(8, 6))
         sns.heatmap(self.conf_matrix, annot=True, fmt='d', cmap='Blues', cbar=False, 
                     xticklabels=class_names, yticklabels=class_names)
-        plt.title('CIFAR Grey - MLP 9 Hidden Layers')
+        plt.title('CNN - Typ LeNet5')
         plt.xlabel('Predicted Labels')
         plt.ylabel('True Labels')
 
@@ -227,17 +223,17 @@ class Classifier:
 
         plt.xticks(rotation=45)  # Drehen Sie die Achsenbeschriftungen für bessere Lesbarkeit
         plt.yticks(rotation=45)
-        plt.savefig('./confusion_Matrices/cm_CIFAR_grey_MLP_9_hiddenL.png')  # Speichern Sie die Confusion Matrix als PNG-Datei
+        plt.savefig('./confusion_Matrices/CIFAR_Cnn_Classifier.png')  # Speichern Sie die Confusion Matrix als PNG-Datei
         plt.show()
 
     def saveModelWeights(self, epoch):
-        modelSavePath = f'./trainedModels/cnnComplex_cifarGrey_epoch_{epoch}.ckpt'
+        modelSavePath = f'./trainedModels/cnn_cifar_epoch_{epoch}.ckpt'
         os.makedirs(os.path.dirname(modelSavePath), exist_ok=True)
         torch.save(self.network.state_dict(), modelSavePath)
         print(f'Modell wurde unter {modelSavePath} gespeichert.')
 
     def loadModelWeights(self, epoch):
-        modelLoadPath = f'./trainedModels/cnnComplex_cifarGrey_epoch_{epoch}.ckpt'
+        modelLoadPath = f'./trainedModels/cnn_cifar_epoch_{epoch}.ckpt'
         if os.path.exists(modelLoadPath):
             self.network.load_state_dict(torch.load(modelLoadPath))
             self.network.to(self.device)
@@ -246,12 +242,12 @@ class Classifier:
             print(f'Keine gespeicherten Gewichte unter {modelLoadPath} gefunden.')
 
 
+
 def main():
-    n_epochs = 40
+    n_epochs = 200
     log_interval = 10
-    init_lr = 0.01
-    momentum = 0.9
-    cl = Classifier(n_epochs, init_lr, momentum)
+    init_lr = 0.0001
+    cl = CNN_CIFAR_Classifier(n_epochs, init_lr)
     cl.test()
 
     for epoch in range(1, n_epochs + 1):
@@ -259,6 +255,11 @@ def main():
         cl.validate()
 
     cl.plot_val_train_losses()
+
+    cl.test()
+    cl.plot_confMatrix()
+
+    cl.saveModelWeights(n_epochs)
 
 if __name__ == '__main__':
     main()

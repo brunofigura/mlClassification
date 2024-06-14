@@ -19,13 +19,22 @@ class CNN_MNIST(nn.Module):
         self.fc1 = nn.Linear(16 * 5 * 5, 120)
         self.fc2 = nn.Linear(120, 84)
         self.fc3 = nn.Linear(84, num_classes)
+        self.b_norm1 = nn.BatchNorm1d(120)
+        self.b_norm2 = nn.BatchNorm1d(84)
+        self.dropout = nn.Dropout(0.2)
 
     def forward(self, x):
         x = self.pool(nn.functional.relu(self.conv1(x)))
         x = self.pool(nn.functional.relu(self.conv2(x)))
         x = x.view(-1, 16 * 5 * 5)
-        x = nn.functional.relu(self.fc1(x))
-        x = nn.functional.relu(self.fc2(x))
+        x = self.fc1(x)
+        x = self.b_norm1(x)
+        x = nn.functional.relu(x)
+        x = self.dropout(x)
+        x = self.fc2(x)
+        x = self.b_norm2(x)
+        x = nn.functional.relu(x)
+        x = self.dropout(x)
         x = self.fc3(x)
         return x
     
@@ -33,9 +42,11 @@ class MNIST_Cnn_Classifier:
     def __init__(self, n_epochs, init_lr):
          
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        torch.backends.cudnn.benchmark = False # wirft sonst Fehlermeldungen auf -> hilft auch nicht aber der Code läuft 
-        
-        self.batch_size = 64
+       
+        #Legt ein Seed fest, damit die Datensätze immer GLEICH zufällig gemischt werden, für reproduzierbare Ergebnisse
+        torch.manual_seed(42)
+
+        self.batch_size = 128
         self.valid_ratio = 0.1
 
         self.n_epochs = n_epochs
@@ -91,6 +102,7 @@ class MNIST_Cnn_Classifier:
 
     def train(self, epoch, log_interval):
         self.network.train()
+        train_loss = 0
         for batch_idx, (images, labels) in enumerate(self.train_loader):
             images, labels = images.to(self.device), labels.to(self.device)
             self.optimizer.zero_grad()
@@ -98,14 +110,13 @@ class MNIST_Cnn_Classifier:
             loss = self.criterion(output, labels)
             loss.backward()
             self.optimizer.step()
+            train_loss += loss.item()
             if batch_idx % log_interval == 0:
                 print(f'Train Epoch: {epoch} '
                       f'[{batch_idx * len(images)}/{len(self.train_loader.dataset)} '
                       f'({100. * batch_idx / len(self.train_loader):.0f}%)]  Loss: {loss.item():.6f}', end='\r')
-                self.train_losses.append(loss.item())
-                self.train_counter.append(
-                    (batch_idx * self.batch_size) + ((epoch - 1) * len(self.train_loader.dataset)))
-            
+        train_loss /= len(self.train_loader)
+        self.train_losses.append(train_loss)
 
     def validate(self):
         self.network.eval()
@@ -158,11 +169,20 @@ class MNIST_Cnn_Classifier:
         plt.figure(figsize=(10, 5))
         plt.plot(self.train_losses, label='Training Loss', color='blue')
         plt.plot(self.valid_losses, label='Validation Loss', color='orange')
-        plt.xlabel('Iterations')
+        plt.xlabel('Epochs')
         plt.ylabel('Loss')
         plt.title('Training and Validation Losses')
         plt.legend()
+
+        # Save the plot to a directory
+        directory = './loss_plots'
+        os.makedirs(directory, exist_ok=True)
+        plot_filename = f'TrainValLoss_cnn_cifar_{self.n_epochs}.png'
+        plot_path = os.path.join(directory, plot_filename)
+        plt.savefig(plot_path)
+        print(f'Plot gespeichert unter {plot_path}')
         plt.show()
+
 
     def plot_confMatrix(self):
         class_names = ['zero', 'one', 'two', 'three', 'four',
@@ -180,7 +200,7 @@ class MNIST_Cnn_Classifier:
         plt.figure(figsize=(8, 6))
         sns.heatmap(self.conf_matrix, annot=True, fmt='d', cmap='Blues', cbar=False, 
                     xticklabels=class_names, yticklabels=class_names)
-        plt.title('MLP - 2 Hidden Layers')
+        plt.title('MNIST - CNN Typ LeNet5')
         plt.xlabel('Predicted Labels')
         plt.ylabel('True Labels')
 
@@ -194,18 +214,27 @@ class MNIST_Cnn_Classifier:
         plt.savefig('./confusion_Matrices/cm_MNIST_CNN.png')  # Speichern Sie die Confusion Matrix als PNG-Datei
         plt.show()
 
-    def saveModelWheights(self):
-        modelSavePath = './trainedModels/MNIST_Cnn_Classifier.ckpt'
+    def saveModelWeights(self, epoch):
+        modelSavePath = f'./trainedModels/cnn_mnist_epoch_{epoch}.ckpt'
         os.makedirs(os.path.dirname(modelSavePath), exist_ok=True)
         torch.save(self.network.state_dict(), modelSavePath)
         print(f'Modell wurde unter {modelSavePath} gespeichert.')
 
+    def loadModelWeights(self, epoch):
+        modelLoadPath = f'./trainedModels/cnn_mnist_epoch_{epoch}.ckpt'
+        if os.path.exists(modelLoadPath):
+            self.network.load_state_dict(torch.load(modelLoadPath))
+            self.network.to(self.device)
+            print(f'Modell wurde aus {modelLoadPath} geladen.')
+        else:
+            print(f'Keine gespeicherten Gewichte unter {modelLoadPath} gefunden.')
+
 
 
 def main():
-    n_epochs = 10
+    n_epochs = 200
     log_interval = 10
-    init_lr = 0.001
+    init_lr = 0.0001
     cl = MNIST_Cnn_Classifier(n_epochs, init_lr)
     cl.test()
 
@@ -218,7 +247,7 @@ def main():
     cl.test()
     cl.plot_confMatrix()
 
-    cl.saveModelWheights()
+    cl.saveModelWeights(n_epochs)
 
 if __name__ == '__main__':
     main()

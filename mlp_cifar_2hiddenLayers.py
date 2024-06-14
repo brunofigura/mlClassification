@@ -16,29 +16,41 @@ class MLP(nn.Module):
             self.fc1 = nn.Linear(input_size, 128)
             self.relu = nn.ReLU()
             self.fc2 = nn.Linear(128, output_size)
+            self.b_norm1 = nn.BatchNorm1d(128)
+            self.dropout = nn.Dropout(0.1)
 
         def forward(self, x):
             x = x.view(-1, self.input_size)  # Flatten the image
             x = self.fc1(x)
+            x = self.b_norm1(x)
             x = self.relu(x)
+            x = self.dropout(x)
             x = self.fc2(x)
             return x
         
 class Classifier:
-    def __init__(self, n_epochs, init_lr, momentum):
+    def __init__(self, n_epochs, init_lr):
 
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-        self.batch_size = 64
+        #Legt ein Seed fest, damit die Datensätze immer GLEICH zufällig gemischt werden, für reproduzierbare Ergebnisse
+        torch.manual_seed(42)
+
+        self.batch_size = 128
         self.valid_ratio = 0.1
 
         self.n_epochs = n_epochs
         self.init_lr = init_lr
-        self.momentum = momentum
-        self.img_res = 32 * 32 * 3
+        self.img_res = 28 * 28 * 3      #eigentlich 32x32x3 aber es wird ein 28 Cropped Bild genommen
         self.num_classes = 10
 
+
+
+           
+
         transform = transforms.Compose([
+                transforms.RandomRotation(5, fill=(0.2)),    #Trainingsdatensatz um + - 5 Grad zufällig rotieren
+                transforms.RandomCrop(28, padding=2),       #2Pixel Rand erzeugen und davon 28x28 Pixel Crop nehmen
                 transforms.ToTensor(),
                 transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
         ])
@@ -54,7 +66,8 @@ class Classifier:
                             train=False,
                             download=True,
                             transform=transform)
-        
+
+
         #Validierungs-Set vom Trainingsdatensatz erzeugen
         num_train = len(self.train_dataset)
         num_valid = int(self.valid_ratio * num_train)
@@ -81,6 +94,8 @@ class Classifier:
         self.optimizer = optim.Adam(self.network.parameters(), self.init_lr)
         self.criterion = nn.CrossEntropyLoss()  # Use CrossEntropyLoss instead of NLLLoss
         
+        self.valid_batch_losses = []
+        self.train_batch_losses = []
         self.train_losses = []
         self.train_counter = []
         self.valid_losses = []
@@ -95,6 +110,7 @@ class Classifier:
 
     def train(self, epoch, log_interval):
         self.network.train()
+        train_loss = 0
         for batch_idx, (images, labels) in enumerate(self.train_loader):
             images, labels = images.to(self.device), labels.to(self.device)
             self.optimizer.zero_grad()
@@ -102,13 +118,13 @@ class Classifier:
             loss = self.criterion(output, labels)
             loss.backward()
             self.optimizer.step()
+            train_loss += loss.item()
             if batch_idx % log_interval == 0:
                 print(f'Train Epoch: {epoch} '
                       f'[{batch_idx * len(images)}/{len(self.train_loader.dataset)} '
                       f'({100. * batch_idx / len(self.train_loader):.0f}%)]  Loss: {loss.item():.6f}', end='\r')
-                self.train_losses.append(loss.item())
-                self.train_counter.append(
-                    (batch_idx * self.batch_size) + ((epoch - 1) * len(self.train_loader.dataset)))
+        train_loss /= len(self.train_loader)
+        self.train_losses.append(train_loss)
             
 
     def validate(self):
@@ -162,10 +178,18 @@ class Classifier:
         plt.figure(figsize=(10, 5))
         plt.plot(self.train_losses, label='Training Loss', color='blue')
         plt.plot(self.valid_losses, label='Validation Loss', color='orange')
-        plt.xlabel('Iterations')
+        plt.xlabel('Epochs')
         plt.ylabel('Loss')
         plt.title('Training and Validation Losses')
         plt.legend()
+
+        # Save the plot to a directory
+        directory = './loss_plots'
+        os.makedirs(directory, exist_ok=True)
+        plot_filename = f'TrainValLoss_cnn_cifar_{self.n_epochs}.png'
+        plot_path = os.path.join(directory, plot_filename)
+        plt.savefig(plot_path)
+        print(f'Plot gespeichert unter {plot_path}')
         plt.show()
 
     def plot_confMatrix(self):
@@ -184,7 +208,7 @@ class Classifier:
         plt.figure(figsize=(8, 6))
         sns.heatmap(self.conf_matrix, annot=True, fmt='d', cmap='Blues', cbar=False, 
                     xticklabels=class_names, yticklabels=class_names)
-        plt.title('MLP - 2 Hidden Layers')
+        plt.title('CIFAR -MLP 2 Hidden Layers')
         plt.xlabel('Predicted Labels')
         plt.ylabel('True Labels')
 
@@ -195,22 +219,30 @@ class Classifier:
 
         plt.xticks(rotation=45)  # Drehen Sie die Achsenbeschriftungen für bessere Lesbarkeit
         plt.yticks(rotation=45)
-        plt.savefig('./confusion_Matrices/cm_MNIST_MLP_2_hiddenL.png')  # Speichern Sie die Confusion Matrix als PNG-Datei
+        plt.savefig('./confusion_Matrices/cm_CIFAR_MLP_2_hiddenL.png')  # Speichern Sie die Confusion Matrix als PNG-Datei
         plt.show()
 
-    def saveModelWheights(self):
-        modelSavePath = './trainedModels/mlp_cifar.ckpt'
+    def saveModelWeights(self, epoch):
+        modelSavePath = f'./trainedModels/mlp2_cifar_epoch_{epoch}.ckpt'
         os.makedirs(os.path.dirname(modelSavePath), exist_ok=True)
         torch.save(self.network.state_dict(), modelSavePath)
         print(f'Modell wurde unter {modelSavePath} gespeichert.')
 
+    def loadModelWeights(self, epoch):
+        modelLoadPath = f'./trainedModels/mlp2_cifar_epoch_{epoch}.ckpt'
+        if os.path.exists(modelLoadPath):
+            self.network.load_state_dict(torch.load(modelLoadPath))
+            self.network.to(self.device)
+            print(f'Modell wurde aus {modelLoadPath} geladen.')
+        else:
+            print(f'Keine gespeicherten Gewichte unter {modelLoadPath} gefunden.')
+
 
 
 def main():
-    n_epochs = 10
-    save = False
+    n_epochs = 200
     log_interval = 10
-    init_lr = 0.01
+    init_lr = 0.0001
     cl = Classifier(n_epochs, init_lr)
     cl.test()
 
@@ -223,7 +255,7 @@ def main():
     cl.test()
     cl.plot_confMatrix()
 
-    cl.saveModelWheights()
+    cl.saveModelWeights(n_epochs)
 
 if __name__ == '__main__':
     main()
