@@ -52,7 +52,7 @@ class CNN_CIFAR_COMPLEX(nn.Module):     #VGG architecture
             nn.ReLU(inplace=True),
             nn.Conv2d(512, 512, kernel_size=3, padding=1),
             nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=2, stride=2),
+           #nn.MaxPool2d(kernel_size=2, stride=2),
         )
 
         self.classifier = nn.Sequential(
@@ -275,7 +275,7 @@ class CNN_CIFAR_Classifier:
 
 
 def main():
-    n_epochs = 50
+    n_epochs = 200
     log_interval = 10
     init_lr = 0.0001
     cl = CNN_CIFAR_Classifier(n_epochs, init_lr)
@@ -290,7 +290,7 @@ def main():
     cl.test()
     cl.plot_confMatrix()
 
-    cl.saveModelWheights()
+    cl.saveModelWeights(n_epochs)
 
 if __name__ == '__main__':
     main()

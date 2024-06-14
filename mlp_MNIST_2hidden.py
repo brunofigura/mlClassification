@@ -41,7 +41,7 @@ class Classifier:
 
         self.n_epochs = n_epochs
         self.init_lr = init_lr
-        self.img_res = 28 * 28 * 1      #eigentlich 32x32x3 aber es wird ein 28 Cropped Bild genommen
+        self.img_res = 28 * 28 * 1     
         self.num_classes = 10
 
 
@@ -56,12 +56,12 @@ class Classifier:
 
 
 
-        self.train_dataset = torchvision.datasets.CIFAR10(root='./data',
+        self.train_dataset = torchvision.datasets.MNIST(root='./data',
                                 train=True,
                                 download=True,
                                 transform=transform)
 
-        self.test_dataset = torchvision.datasets.CIFAR10(root='./data',
+        self.test_dataset = torchvision.datasets.MNIST(root='./data',
                             train=False,
                             download=True,
                             transform=transform)
@@ -239,8 +239,7 @@ class Classifier:
 
 
 def main():
-    n_epochs = 20
-    save = False
+    n_epochs = 200
     log_interval = 10
     init_lr = 0.0001
     cl = Classifier(n_epochs, init_lr)
@@ -255,7 +254,7 @@ def main():
     cl.test()
     cl.plot_confMatrix()
 
-    cl.saveModelWheights()
+    cl.saveModelWeights(n_epochs)
 
 if __name__ == '__main__':
     main()

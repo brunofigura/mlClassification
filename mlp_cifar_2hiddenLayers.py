@@ -241,7 +241,6 @@ class Classifier:
 
 def main():
     n_epochs = 200
-    save = False
     log_interval = 10
     init_lr = 0.0001
     cl = Classifier(n_epochs, init_lr)
@@ -256,7 +255,7 @@ def main():
     cl.test()
     cl.plot_confMatrix()
 
-    cl.saveModelWheights()
+    cl.saveModelWeights(n_epochs)
 
 if __name__ == '__main__':
     main()
