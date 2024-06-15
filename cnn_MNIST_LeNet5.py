@@ -177,7 +177,7 @@ class MNIST_Cnn_Classifier:
         # Save the plot to a directory
         directory = './loss_plots'
         os.makedirs(directory, exist_ok=True)
-        plot_filename = f'TrainValLoss_cnn_cifar_{self.n_epochs}.png'
+        plot_filename = f'TrainValLoss_cnn_mnist_{self.n_epochs}.png'
         plot_path = os.path.join(directory, plot_filename)
         plt.savefig(plot_path)
         print(f'Plot gespeichert unter {plot_path}')
