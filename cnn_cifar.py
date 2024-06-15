@@ -202,7 +202,7 @@ class CNN_CIFAR_Classifier:
         # Plot in ein Ordner speichern
         directory = './loss_plots'
         os.makedirs(directory, exist_ok=True)
-        plot_filename = f'TrainValLoss_cnn_cifar_{self.n_epochs}.png'
+        plot_filename = f'TrainValLoss_cnn_cifar_{self.n_epochs}-Epochs.png'
         plot_path = os.path.join(directory, plot_filename)
         plt.savefig(plot_path)
         print(f'Plot gespeichert unter {plot_path}')
@@ -225,7 +225,7 @@ class CNN_CIFAR_Classifier:
         plt.figure(figsize=(8, 6))
         sns.heatmap(self.conf_matrix, annot=True, fmt='d', cmap='Blues', cbar=False, 
                     xticklabels=class_names, yticklabels=class_names)
-        plt.title('CNN - Typ LeNet5')
+        plt.title('CNN - Cifar10')
         plt.xlabel('Predicted Labels')
         plt.ylabel('True Labels')
 
@@ -236,7 +236,7 @@ class CNN_CIFAR_Classifier:
 
         plt.xticks(rotation=45)  # Drehen Sie die Achsenbeschriftungen für bessere Lesbarkeit
         plt.yticks(rotation=45)
-        plt.savefig('./confusion_Matrices/CIFAR_Cnn_Classifier.png')  # Speichern Sie die Confusion Matrix als PNG-Datei
+        plt.savefig(f'./confusion_Matrices/CIFAR_Cnn_Classifier_{self.n_epochs}-Epochs.png')  # Speichern Sie die Confusion Matrix als PNG-Datei
         plt.show()
 
     #Methode um trainierte Gewichte eines Modells zu speichen
