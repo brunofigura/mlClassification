@@ -51,7 +51,7 @@ class Classifier:
         
         transform = transforms.Compose([
             transforms.ToTensor(),
-            transforms.Normalize((0.1307,), (0.3081,))  # Normalisieren und Standartabweichung des MNIST Datensatzen ( vorher waren die Werte 0.5 und 0.5)
+            transforms.Normalize((0.1307,), (0.3081,))  
         ])
 
 
@@ -184,7 +184,7 @@ class Classifier:
         # Save the plot to a directory
         directory = './loss_plots'
         os.makedirs(directory, exist_ok=True)
-        plot_filename = f'TrainValLoss_mlp2_mnist_{self.n_epochs}.png'
+        plot_filename = f'TrainValLoss_mlp2_mnist_{self.n_epochs}-Epochs.png'
         plot_path = os.path.join(directory, plot_filename)
         plt.savefig(plot_path)
         print(f'Plot gespeichert unter {plot_path}')
@@ -218,7 +218,7 @@ class Classifier:
 
         plt.xticks(rotation=45)  # Drehen Sie die Achsenbeschriftungen für bessere Lesbarkeit
         plt.yticks(rotation=45)
-        plt.savefig('./confusion_Matrices/cm_MNIST_MLP_2_hiddenL.png')  # Speichern Sie die Confusion Matrix als PNG-Datei
+        plt.savefig(f'./confusion_Matrices/cm_MNIST_MLP_2_hiddenL_{self.n_epochs}-Epochs.png')  # Speichern Sie die Confusion Matrix als PNG-Datei
         plt.show()
 
     def saveModelWeights(self, epoch):
