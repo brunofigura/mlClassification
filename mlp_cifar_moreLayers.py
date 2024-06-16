@@ -270,7 +270,7 @@ class Classifier:
 
 
 def main():
-    n_epochs = 200
+    n_epochs = 20
     log_interval = 10
     init_lr = 0.0001
     cl = Classifier(n_epochs, init_lr)

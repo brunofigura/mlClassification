@@ -256,11 +256,28 @@ class CNN_CIFAR_Classifier:
         else:
             print(f'Keine gespeicherten Gewichte unter {modelLoadPath} gefunden.')
 
+    def export_to_onnx(self, epoch):
+        modelLoadPath = f'./trainedModels/cnn_cifar_epoch_{epoch}.ckpt'
+        onnx_directory = './onnxModelExport'
+        os.makedirs(onnx_directory, exist_ok=True)
+        onnx_model_path = os.path.join(onnx_directory, f'cnn_cifar_epoch_{epoch}.onnx')
+
+        # Modell in den Evaluierungsmodus versetzen
+        self.network.eval()
+
+        # Dummy-Input für den Export des ONNX-Modells
+        dummy_input = torch.randn(1, 3, 28, 28).to(self.device)
+
+        # Exportiere das Modell
+        torch.onnx.export(self.network, dummy_input, onnx_model_path, opset_version=11)
+        print(f'Modell wurde nach {onnx_model_path} exportiert.')
+
+
 
 # Main-Methode 
 def main():
     #Hyperparameter festlegen
-    n_epochs = 200
+    n_epochs = 20
     log_interval = 10
     init_lr = 0.0001
 
@@ -284,6 +301,8 @@ def main():
 
     #Speichern der optimierten Gewichte
     cl.saveModelWeights(n_epochs)
+
+    cl.export_to_onnx(n_epochs)
 
 #Wirft ein Fehler wenn der Teil nicht existiert 
 if __name__ == '__main__':

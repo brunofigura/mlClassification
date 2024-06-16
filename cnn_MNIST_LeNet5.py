@@ -177,7 +177,7 @@ class MNIST_Cnn_Classifier:
         # Save the plot to a directory
         directory = './loss_plots'
         os.makedirs(directory, exist_ok=True)
-        plot_filename = f'TrainValLoss_cnn_mnist_{self.n_epochs}.png'
+        plot_filename = f'TrainValLoss_cnn_mnist_{self.n_epochs}-Epochs.png'
         plot_path = os.path.join(directory, plot_filename)
         plt.savefig(plot_path)
         print(f'Plot gespeichert unter {plot_path}')
@@ -200,7 +200,7 @@ class MNIST_Cnn_Classifier:
         plt.figure(figsize=(8, 6))
         sns.heatmap(self.conf_matrix, annot=True, fmt='d', cmap='Blues', cbar=False, 
                     xticklabels=class_names, yticklabels=class_names)
-        plt.title('MNIST - CNN Typ LeNet5')
+        plt.title('MNIST - CNN')
         plt.xlabel('Predicted Labels')
         plt.ylabel('True Labels')
 
@@ -211,7 +211,7 @@ class MNIST_Cnn_Classifier:
 
         plt.xticks(rotation=45)  # Drehen Sie die Achsenbeschriftungen für bessere Lesbarkeit
         plt.yticks(rotation=45)
-        plt.savefig('./confusion_Matrices/cm_MNIST_CNN.png')  # Speichern Sie die Confusion Matrix als PNG-Datei
+        plt.savefig(f'./confusion_Matrices/cm_MNIST_CNN_{self.n_epochs}-Epochs.png')  # Speichern Sie die Confusion Matrix als PNG-Datei
         plt.show()
 
     def saveModelWeights(self, epoch):
@@ -232,7 +232,7 @@ class MNIST_Cnn_Classifier:
 
 
 def main():
-    n_epochs = 200
+    n_epochs = 20
     log_interval = 10
     init_lr = 0.0001
     cl = MNIST_Cnn_Classifier(n_epochs, init_lr)
