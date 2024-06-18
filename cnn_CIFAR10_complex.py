@@ -262,7 +262,7 @@ class CNN_CIFAR_Classifier:
         plt.figure(figsize=(8, 6))
         sns.heatmap(self.conf_matrix, annot=True, fmt='d', cmap='Blues', cbar=False, 
                     xticklabels=class_names, yticklabels=class_names)
-        plt.title('CNN - Typ LeNet5')
+        plt.title('CNN VGG - CIFAR10')
         plt.xlabel('Predicted Labels')
         plt.ylabel('True Labels')
 

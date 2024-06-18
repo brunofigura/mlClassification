@@ -192,8 +192,8 @@ class Classifier:
 
         
     def plot_confMatrix(self):
-        class_names = ['One', 'Two', 'Three', 'Four', 'Five',
-               'Six', 'Seven', 'Eight', 'Nine', 'Ten']
+        class_names = ['Zero', 'One', 'Two', 'Three', 'Four', 'Five',
+               'Six', 'Seven', 'Eight', 'Nine']
         
         hyperparameters = {
             'Epochs' : self.n_epochs,
