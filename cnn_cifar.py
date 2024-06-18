@@ -277,7 +277,7 @@ class CNN_CIFAR_Classifier:
 # Main-Methode 
 def main():
     #Hyperparameter festlegen
-    n_epochs = 20
+    n_epochs = 1
     log_interval = 10
     init_lr = 0.0001
 

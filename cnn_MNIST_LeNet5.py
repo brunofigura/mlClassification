@@ -232,7 +232,7 @@ class MNIST_Cnn_Classifier:
 
 
 def main():
-    n_epochs = 20
+    n_epochs = 1
     log_interval = 10
     init_lr = 0.0001
     cl = MNIST_Cnn_Classifier(n_epochs, init_lr)
