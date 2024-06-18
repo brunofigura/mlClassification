@@ -262,7 +262,7 @@ class CNN_CIFAR_Classifier:
         plt.figure(figsize=(8, 6))
         sns.heatmap(self.conf_matrix, annot=True, fmt='d', cmap='Blues', cbar=False, 
                     xticklabels=class_names, yticklabels=class_names)
-        plt.title('CNN VGG - CIFAR10')
+        plt.title('CNN VGG - Cifar10')
         plt.xlabel('Predicted Labels')
         plt.ylabel('True Labels')
 
@@ -271,9 +271,9 @@ class CNN_CIFAR_Classifier:
                 xycoords='axes fraction', textcoords='axes fraction',
                 fontsize=7, ha='center', va='center', bbox=dict(facecolor='none', edgecolor='black', boxstyle='round,pad=0.5'))
 
-        plt.xticks(rotation=45)  # Drehen Sie die Achsenbeschriftungen für bessere Lesbarkeit
+        plt.xticks(rotation=45)  # Dreht die Achsenbeschriftungen für bessere Lesbarkeit
         plt.yticks(rotation=45)
-        plt.savefig(f'./confusion_Matrices/CIFAR_Cnn_COMPLEX_Classifier_{self.n_epochs}-Epochs.png')  # Speichern Sie die Confusion Matrix als PNG-Datei
+        plt.savefig(f'./confusion_Matrices/CIFAR_Cnn_COMPLEX_Classifier_{self.n_epochs}-Epochs.png')  # Speichert die Confusion Matrix als PNG-Datei
         plt.show()
 
     #Methode um trainierte Gewichte eines Modells zu speichen

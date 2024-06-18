@@ -40,7 +40,7 @@ class CNN_CIFAR(nn.Module):
         return x
 
 # Klasse mit der ein Netz trainiert, validiert und getestet werden kann 
-class CNN_CIFAR_Classifier:
+class Classifier:
     def __init__(self, n_epochs, init_lr):
         
         
@@ -221,7 +221,7 @@ class CNN_CIFAR_Classifier:
         # Konvertiere die Hyperparameter in einen lesbaren String
         hyperparameters_str = '\n'.join([f'{key}: {value}' for key, value in hyperparameters.items()])
 
-        # Plot Confusion Matrix
+        # Zeigt Confusion Matrix an
         plt.figure(figsize=(8, 6))
         sns.heatmap(self.conf_matrix, annot=True, fmt='d', cmap='Blues', cbar=False, 
                     xticklabels=class_names, yticklabels=class_names)
@@ -234,9 +234,9 @@ class CNN_CIFAR_Classifier:
                 xycoords='axes fraction', textcoords='axes fraction',
                 fontsize=7, ha='center', va='center', bbox=dict(facecolor='none', edgecolor='black', boxstyle='round,pad=0.5'))
 
-        plt.xticks(rotation=45)  # Drehen Sie die Achsenbeschriftungen für bessere Lesbarkeit
+        plt.xticks(rotation=45)  # Dreht Achsenbeschriftungen für bessere Lesbarkeit
         plt.yticks(rotation=45)
-        plt.savefig(f'./confusion_Matrices/CIFAR_Cnn_Classifier_{self.n_epochs}-Epochs.png')  # Speichern Sie die Confusion Matrix als PNG-Datei
+        plt.savefig(f'./confusion_Matrices/CIFAR_Cnn_Classifier_{self.n_epochs}-Epochs.png')  # Speichert die Confusion Matrix als PNG-Datei
         plt.show()
 
     #Methode um trainierte Gewichte eines Modells zu speichen
@@ -266,7 +266,7 @@ def main():
     init_lr = 0.0001
 
     #Instanz des Klassifizieres erzeugen
-    cl = CNN_CIFAR_Classifier(n_epochs, init_lr)
+    cl = Classifier(n_epochs, init_lr)
     #Test von zufällig initierten Gewichten
     cl.test()
 
@@ -286,7 +286,6 @@ def main():
     #Speichern der optimierten Gewichte
     cl.saveModelWeights(n_epochs)
 
-    cl.export_to_onnx(n_epochs)
 
 #Wirft ein Fehler wenn der Teil nicht existiert 
 if __name__ == '__main__':
