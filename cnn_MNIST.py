@@ -16,7 +16,7 @@ class CNN_MNIST(nn.Module):
         self.conv1 = nn.Conv2d(1, 6, kernel_size=5) #passt in Channels an, da MNIST Graustufenbilder sind
         self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
         self.conv2 = nn.Conv2d(6, 16, kernel_size=5)
-        self.fc1 = nn.Linear(16 * 5 * 5, 120)
+        self.fc1 = nn.Linear(16 * 4 * 4, 120)
         self.fc2 = nn.Linear(120, 84)
         self.fc3 = nn.Linear(84, num_classes)
         self.b_norm1 = nn.BatchNorm1d(120)
@@ -26,7 +26,7 @@ class CNN_MNIST(nn.Module):
     def forward(self, x):
         x = self.pool(nn.functional.relu(self.conv1(x)))
         x = self.pool(nn.functional.relu(self.conv2(x)))
-        x = x.view(-1, 16 * 5 * 5)
+        x = x.view(-1, 16 * 4 * 4)
         x = self.fc1(x)
         x = self.b_norm1(x)
         x = nn.functional.relu(x)
@@ -103,7 +103,7 @@ class Classifier:
 
 
         # Netzwerk "laden"
-        self.network = CNN_MNIST(self.img_res, self.num_classes)
+        self.network = CNN_MNIST(self.num_classes)
         self.network = self.network.to(self.device)
 
         # Algorithmus für den Gradientenabstieg festlegen
@@ -266,12 +266,14 @@ class Classifier:
 # Main-Methode 
 def main():
     #Hyperparameter festlegen
-    n_epochs = 1
+    n_epochs = 200
     log_interval = 10
     init_lr = 0.0001
 
     #Instanz des Klassifizieres erzeugen
     cl = Classifier(n_epochs, init_lr)
+    
+    #cl.loadModelWeights(n_epochs)
     #Test von zufällig initierten Gewichten
     cl.test()
 
@@ -289,7 +291,7 @@ def main():
     cl.plot_confMatrix()
 
     #Speichern der optimierten Gewichte
-    cl.saveModelWeights(n_epochs)
+    #cl.saveModelWeights(n_epochs)
 
 #Wirft ein Fehler wenn der Teil nicht existiert 
 if __name__ == '__main__':

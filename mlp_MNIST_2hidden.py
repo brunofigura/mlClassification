@@ -256,30 +256,34 @@ class Classifier:
 # Main-Methode 
 def main():
     #Hyperparameter festlegen
-    n_epochs = 1
+    n_epochs = 200
     log_interval = 10
     init_lr = 0.0001
 
     #Instanz des Klassifizieres erzeugen
     cl = Classifier(n_epochs, init_lr)
     #Test von zufällig initierten Gewichten
-    cl.test()
+    #cl.test()
 
     #Jede Epoche ein Trainings und ein Validierungsschritt
-    for epoch in range(1, n_epochs + 1):
-        cl.train(epoch, log_interval)
-        cl.validate()
+    
+    #for epoch in range(1, n_epochs + 1):
+    #    cl.train(epoch, log_interval)
+    #    cl.validate()
 
     #Plotten des Trainings- und Validierungs-Loss-Graphen
-    cl.plot_val_train_losses()
+    #cl.plot_val_train_losses()
+
+    cl.loadModelWeights(n_epochs)
+    cl.test()
 
     #Evaluieren des trainierten Netzes
-    cl.test()
+    #cl.test()
     #Plotten der Confusion-Matrix
     cl.plot_confMatrix()
 
     #Speichern der optimierten Gewichte
-    cl.saveModelWeights(n_epochs)
+    #cl.saveModelWeights(n_epochs)
 
 #Wirft ein Fehler wenn der Teil nicht existiert 
 if __name__ == '__main__':
