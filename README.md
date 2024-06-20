@@ -31,13 +31,15 @@ Der Befehl `pip install -r requirements.txt` installiert alle benutzen Packages 
 
 > Es muss vorher sicher gestellt werden, dass das man sich im Projekt-Directory befindet
 
+__Achtung__ falls es zu Problemen kommen sollte, kann es manchmal helfen zuerst den zweiten Schritt vor dem ersten Schritt auszuführen. 
+
 ## Netze trainieren und evaluieren
 
 Jeder Klassifizierer hat sein eigenes Python-Programm. Führt man diese in einer IDE aus, wird das entsprechende Netz trainiert. 
 Jedes Programm folgt dem gleichen Aufbau.
-> 1. Netz modellieren
-> 2. Klassifizierer modellieren, der ein Netz trainieren, validieren, testen und Auswerten kann
->  3. Eine Main-Methode die beim Programm-Start ausgeführt wird.
+1. Netz modellieren
+2. Klassifizierer modellieren, der ein Netz trainieren, validieren, testen und Auswerten kann
+3. Eine Main-Methode die beim Programm-Start ausgeführt wird.
 
 In der Main-Methode gibt man alle relevanten Hyperparameter an. Es besteht auch die Möglichkeit nach dem Training einen Netzes, die trainierten Gewichte in einer Datei zu speichern und diese zu einem späteren Zeitpunkt wieder zu laden. 
 
