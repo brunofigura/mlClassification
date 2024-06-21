@@ -8,6 +8,7 @@ import torchvision.transforms as transforms
 from sklearn.metrics import precision_score, recall_score, f1_score, confusion_matrix
 import matplotlib.pyplot as plt
 import seaborn as sns
+import numpy
 
 #Netz bauen basierend auf einer VGG Architekur
 class CNN_CIFAR_COMPLEX(nn.Module):     
@@ -293,11 +294,39 @@ class CNN_CIFAR_Classifier:
         else:
             print(f'Keine gespeicherten Gewichte unter {modelLoadPath} gefunden.')
 
+    def display_and_save_predictions(self, n_images=25, directory='./predictions'):
+        self.network.eval()
+        images, labels = next(iter(self.test_loader))
+        images, labels = images.to(self.device), labels.to(self.device)
+        
+        output = self.network(images)
+        preds = output.data.max(1, keepdim=True)[1]
+        
+        # CIFAR-10 Klassennamen
+        class_names = ['airplane', 'automobile', 'bird', 'cat', 'deer', 
+                   'dog', 'frog', 'horse', 'ship', 'truck']
+
+        plt.figure(figsize=(10, 10))
+        for i in range(n_images):
+            plt.subplot(5, 5, i+1)
+            img = images[i].cpu().permute(1, 2, 0).numpy()  # Transformiere die Tensor-Dimensionen für die Darstellung
+            img = img * (0.2023, 0.1994, 0.2010) + (0.4914, 0.4822, 0.4465)  # Unnormalize das Bild
+            plt.imshow(img)
+            plt.title(f'Pred: {class_names[preds[i].item()]}')
+            plt.axis('off')
+        
+        # Speicher das Raster in ein Verzeichnis
+        os.makedirs(directory, exist_ok=True)
+        raster_path = os.path.join(directory, f'CNNcomplex_CIFAR_{self.n_epochs}_epochs_predictions_grid.png')
+        plt.savefig(raster_path)
+        print(f'Raster gespeichert unter {raster_path}')
+        plt.show()
+
 
 # Main-Methode 
 def main():
     #Hyperparameter festlegen
-    n_epochs = 2
+    n_epochs = 200
     log_interval = 10
     init_lr = 0.0001
 
@@ -305,20 +334,21 @@ def main():
     cl = CNN_CIFAR_Classifier(n_epochs, init_lr)
     #Test von zufällig initierten Gewichten
     cl.test()
-
+    cl.loadModelWeights(n_epochs)
     #Jede Epoche ein Trainings und ein Validierungsschritt
-    for epoch in range(1, n_epochs + 1):
-        cl.train(epoch, log_interval)
-        cl.validate()
+    #for epoch in range(1, n_epochs + 1):
+    #    cl.train(epoch, log_interval)
+    #    cl.validate()
 
     #Plotten des Trainings- und Validierungs-Loss-Graphen
-    cl.plot_val_train_losses()
+    #cl.plot_val_train_losses()
 
     #Evaluieren des trainierten Netzes
     cl.test()
     #Plotten der Confusion-Matrix
     cl.plot_confMatrix()
 
+    cl.display_and_save_predictions()
     #Speichern der optimierten Gewichte
     cl.saveModelWeights(n_epochs)
 
