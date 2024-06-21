@@ -8,7 +8,7 @@ import torchvision.transforms as transforms
 from sklearn.metrics import precision_score, recall_score, f1_score, confusion_matrix
 import matplotlib.pyplot as plt
 import seaborn as sns
-import numpy
+
 
 #Netz bauen basierend auf einer VGG Architekur
 class CNN_CIFAR_COMPLEX(nn.Module):     
