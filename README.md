@@ -7,6 +7,8 @@ Anschließend kann über den Befehl
 `git clone https://github.com/brunofigura/mlClassification.git`
 das Projekt heruntergeladen werden.
 
+Die aktuelle Version des Projektes liegt im main-Branch.
+
 #### 2. Schritt - Virtual Enviroment erstellen
 Da das venv sehr groß ist, ist es nicht im repository hinterlegt und muss manuel initiert werden.
 
