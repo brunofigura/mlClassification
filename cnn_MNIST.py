@@ -300,9 +300,9 @@ def main():
     #cl.test()
 
     #Jede Epoche ein Trainings und ein Validierungsschritt
-    #for epoch in range(1, n_epochs + 1):
-    #    cl.train(epoch, log_interval)
-    #    cl.validate()
+    for epoch in range(1, n_epochs + 1):
+        cl.train(epoch, log_interval)
+        cl.validate()
 
     #Plotten des Trainings- und Validierungs-Loss-Graphen
     cl.plot_val_train_losses()

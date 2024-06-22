@@ -287,14 +287,14 @@ def main():
     cl = Classifier(n_epochs, init_lr)
     #Test von zufällig initierten Gewichten
     cl.test()
-    cl.loadModelWeights(n_epochs)
+    #cl.loadModelWeights(n_epochs)
     #Jede Epoche ein Trainings und ein Validierungsschritt
-    #for epoch in range(1, n_epochs + 1):
-    #    cl.train(epoch, log_interval)
-    #    cl.validate()
+    for epoch in range(1, n_epochs + 1):
+        cl.train(epoch, log_interval)
+        cl.validate()
 
     #Plotten des Trainings- und Validierungs-Loss-Graphen
-    #cl.plot_val_train_losses()
+    cl.plot_val_train_losses()
 
     #Evaluieren des trainierten Netzes
     cl.test()
